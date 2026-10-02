@@ -44,3 +44,10 @@ next-env.d.ts
 
 !.env.example
 /src/generated/prisma/
+
+# Generated development screenshots / artifacts
+artifacts/
+
+# Codex step reports
+docs/step-08-organization-management.md
+docs/step-09-event-management.md
