@@ -101,14 +101,14 @@ model Organization {
   id          String   @id @default(cuid())
   slug        String   @unique
   name        String
-  shortName   String
-  description String
-  industry    String
-  city        String
-  region      String
+  shortName   String?
+  description String?
+  industry    String?
+  city        String?
+  region      String?
   website     String?
-  visualTheme String
-  logoVariant String
+  visualTheme String?
+  logoVariant String?
   createdAt   DateTime @default(now()) @db.Timestamptz(3)
   updatedAt   DateTime @updatedAt @db.Timestamptz(3)
   members     OrganizationMember[]
@@ -134,6 +134,12 @@ model Event {
   slug                 String        @unique
   title                String
   description          String?
+  shortDescription     String?
+  category             String?
+  locationName         String?
+  city                 String?
+  region               String?
+  onlineUrl            String?
   coverImage           String?
   startAt              DateTime      @db.Timestamptz(3)
   endAt                DateTime      @db.Timestamptz(3)

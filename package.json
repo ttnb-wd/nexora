@@ -13,7 +13,11 @@
     "db:migrate": "prisma migrate deploy",
     "db:status": "prisma migrate status",
     "postinstall": "prisma generate",
-    "test:auth": "node --test tests/auth-validation.test.mjs"
+    "test:auth": "node --test tests/auth-validation.test.mjs",
+    "test:organizations": "node --test tests/organization-validation.test.mjs",
+    "test:organizations:runtime": "node tests/organization-runtime.mjs",
+    "test:events": "node --test tests/event-validation.test.mjs",
+    "test:events:runtime": "node tests/event-runtime.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
