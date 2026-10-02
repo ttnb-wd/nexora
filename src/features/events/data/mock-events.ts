@@ -1,3 +1,4 @@
+/** Development and design fixtures only. Public routes load real events from Neon. */
 import type { Event } from "../types";
 import { completedDetail, getMockDetail } from "./mock-event-details";
 

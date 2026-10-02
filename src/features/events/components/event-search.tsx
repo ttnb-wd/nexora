@@ -4,7 +4,7 @@ import { Search, X } from "lucide-react";
 import styles from "./explore.module.css";
 export function EventSearch({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   const input = useRef<HTMLInputElement>(null);
-  return <form role="search" aria-label="Search demo events" onSubmit={(event) => event.preventDefault()} className={styles.search}>
+  return <form role="search" aria-label="Search events" onSubmit={(event) => event.preventDefault()} className={styles.search}>
     <Search aria-hidden="true" size={21} />
     <label htmlFor="event-search" className="sr-only">Search events, organizers, or places</label>
     <input ref={input} id="event-search" type="search" value={value} onChange={(event) => onChange(event.target.value)} placeholder="Find your next idea, connection, or experience…" autoComplete="off" />

@@ -16,11 +16,16 @@ function safeError(error: unknown): EventActionState {
   if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") return { errors: { slug: ["That event URL is already in use."] }, message: "Choose another event URL." };
   return { message: "We couldn’t save this event. Please try again shortly." };
 }
-function refreshEvent(path: string, organizationSlug?: string) {
+function refreshEvent(path: string, organizationSlug?: string, eventSlug?: string) {
   revalidatePath(path);
   revalidatePath(`${path}/edit`);
   revalidatePath("/dashboard/events");
   if (organizationSlug) revalidatePath(`/organizer/${organizationSlug}/events`);
+  revalidatePath("/");
+  revalidatePath("/explore");
+  // Other detail pages may contain this event in their related cards.
+  revalidatePath("/events/[slug]", "page");
+  if (eventSlug) revalidatePath(`/events/${eventSlug}`);
 }
 
 export async function createEvent(_previous: EventActionState, form: FormData): Promise<EventActionState> {
@@ -32,6 +37,7 @@ export async function createEvent(_previous: EventActionState, form: FormData): 
   if (result.data.organizationId) await requireOrganizationRole(result.data.organizationId, eventManagerRoles);
   let path: string;
   let organizationSlug: string | undefined;
+  let eventSlug: string | undefined;
   try {
     const event = await getDb().$transaction(async (tx) => {
       if (result.data.organizationId) {
@@ -43,8 +49,9 @@ export async function createEvent(_previous: EventActionState, form: FormData): 
     if (!event) return { message: "You do not have permission to create events for this organization." };
     path = eventManagementPath(event);
     organizationSlug = event.organization?.slug;
+    eventSlug = event.slug;
   } catch (error) { return safeError(error); }
-  refreshEvent(path, organizationSlug);
+  refreshEvent(path, organizationSlug, eventSlug);
   redirect(path);
 }
 
@@ -64,7 +71,7 @@ export async function updateEvent(eventId: string, scope: string | null, _previo
   } catch (error) { return safeError(error); }
   if (!count) return { message: "This event changed or your access was removed. Reload it before saving." };
   const path = eventManagementPath(event);
-  refreshEvent(path, event.organization?.slug);
+  refreshEvent(path, event.organization?.slug, event.slug);
   redirect(path);
 }
 
@@ -82,7 +89,7 @@ export async function publishEvent(eventId: string, scope: string | null, _previ
     count = updated.count;
   } catch { return { message: "We couldn’t publish this event. Please try again shortly." }; }
   if (!count) return { message: "This event changed or your access was removed. Reload it before publishing." };
-  refreshEvent(eventManagementPath(event), event.organization?.slug);
+  refreshEvent(eventManagementPath(event), event.organization?.slug, event.slug);
   redirect(eventManagementPath(event));
 }
 
@@ -96,6 +103,6 @@ export async function cancelEvent(eventId: string, scope: string | null, _previo
     count = updated.count;
   } catch { return { message: "We couldn’t cancel this event. Please try again shortly." }; }
   if (!count) return { message: "This event changed or your access was removed. Reload it before cancelling." };
-  refreshEvent(eventManagementPath(event), event.organization?.slug);
+  refreshEvent(eventManagementPath(event), event.organization?.slug, event.slug);
   redirect(eventManagementPath(event));
 }

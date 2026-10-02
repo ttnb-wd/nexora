@@ -1,6 +1,6 @@
 export const eventCategories = ["Technology", "AI", "Business", "Design", "Startup", "Community", "Career"] as const;
 export const eventTypes = ["In person", "Online", "Hybrid"] as const;
-export type EventCategory = (typeof eventCategories)[number];
+export type EventCategory = (typeof eventCategories)[number] | "Other";
 export type EventType = (typeof eventTypes)[number];
 export type EventVisual = "violet" | "cyan" | "coral" | "orange" | "warm" | "pink" | "mixed";
 export type EventCardVariant = "featured" | "standard" | "compact" | "editorial";
@@ -27,6 +27,11 @@ export interface Event {
   time: string;
   location: { city: string; venue: string };
   organizationId: string;
+  /** Public identity only; internal user and organization IDs stay on the server. */
+  organizer?: { name: string; slug?: string; industry?: string; location?: string };
+  source?: "database" | "fixture";
+  startAt?: string;
+  timezone?: string;
   type: EventType;
   description?: string;
   visual: { tone: EventVisual; headline: string; caption: string };
@@ -34,6 +39,14 @@ export interface Event {
   tags: string[];
   status: "upcoming" | "completed";
   details: EventDetails;
+}
+
+/** Serializable public view model produced by the server mapper, never a Prisma record. */
+export interface PublicEvent extends Event {
+  organizer: { name: string; slug?: string; industry?: string; location?: string };
+  source: "database";
+  startAt: string;
+  timezone: string;
 }
 
 export type DateFilter = "Any date" | "This week" | "This month" | "Later";

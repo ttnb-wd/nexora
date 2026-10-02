@@ -21,7 +21,7 @@ export async function EventManagementPage({ eventId, scope }: { eventId: string;
       {canManage && event.status === "PUBLISHED" && <EventTransitionForm action={cancelEvent.bind(null, event.id, scope)} kind="cancel" />}
       {!["DRAFT", "PUBLISHED"].includes(event.status) && <p className={styles.note}>This event is read-only. Cancelled events cannot be republished.</p>}
       {!canManage && <p className={styles.note}>Only owners, admins, and editors can manage this organization’s events.</p>}
-      <p className={styles.hint}>Event URL: {event.slug}. This event is available in management only; public discovery is coming later.</p>
+      <p className={styles.hint}>{["PUBLISHED", "COMPLETED"].includes(event.status) ? <Link href={`/events/${event.slug}`}>View public event</Link> : "This event is not publicly accessible."}</p>
     </aside></div><div className={styles.grid}>{["Registrations", "Agenda", "Speakers", "Resources"].map((section) => <section className={styles.card} key={section}><h2>{section}</h2><p>{section} management will be added in a future step.</p></section>)}</div>
   </Container></main>;
 }

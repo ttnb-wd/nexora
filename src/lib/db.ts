@@ -5,7 +5,7 @@ import { getDatabaseUrl } from "./env";
 
 const databaseGlobal = globalThis as unknown as { nexoraPrisma?: PrismaClient };
 let productionClient: PrismaClient | undefined;
-/** Lazy initialization keeps public mock routes/builds independent of DB availability. */
+/** Lazy initialization avoids opening database connections during module loading. */
 export function getDb(): PrismaClient {
   const existing = process.env.NODE_ENV === "production" ? productionClient : databaseGlobal.nexoraPrisma;
   if (existing) return existing;

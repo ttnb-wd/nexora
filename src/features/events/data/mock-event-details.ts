@@ -1,3 +1,4 @@
+/** Development and design fixtures only. Never attach these details to database events. */
 import type { EventDetails, EventSpeaker, EventVisual } from "../types";
 
 // Fictional profiles for UI development; no real-person imagery or identities.

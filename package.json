@@ -17,7 +17,9 @@
     "test:organizations": "node --test tests/organization-validation.test.mjs",
     "test:organizations:runtime": "node tests/organization-runtime.mjs",
     "test:events": "node --test tests/event-validation.test.mjs",
-    "test:events:runtime": "node tests/event-runtime.mjs"
+    "test:events:runtime": "node tests/event-runtime.mjs",
+    "test:events:public:runtime": "node tests/public-event-runtime.mjs",
+    "test:events:public": "node --test tests/public-event-mapper.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

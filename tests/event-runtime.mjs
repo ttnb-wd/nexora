@@ -152,9 +152,9 @@ try {
   const noAuth = await submit('/create-event', '', { ...base, slug: freshSlug('anonymous'), organizationId: '' }, formHtml);
   assert.equal(noAuth.status, 303); assert.equal(noAuth.headers.get('location'), '/sign-in');
   pass('anonymous direct create action denied');
-  const publicPage = await request(`/events/${personalSlug}`); assert.equal(publicPage.status, 404);
+  const publicPage = await request(`/events/${personalSlug}`); assert.equal(publicPage.status, 200);
   assert.equal((await request('/explore')).status, 200);
-  pass('real published events stay private to management; public mock Explore remains available');
+  pass('published individual event is publicly accessible and Explore remains available');
 } finally {
   await db.event.deleteMany({ where: { slug: { in: eventSlugs } } });
   await db.organization.deleteMany({ where: { id: { in: orgIds } } });
