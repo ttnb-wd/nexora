@@ -1,0 +1,16 @@
+.footer { padding-block: 2.5rem 1.5rem; border-top: 1px solid #dce5e7; background: linear-gradient(120deg, #edf6f4, #f9f4ef); }
+.top { display: flex; justify-content: space-between; align-items: center; gap: 2rem; padding-bottom: 2rem; }
+.brand { display: inline-flex; align-items: center; gap: .4rem; text-decoration: none; font-size: 1.9rem; font-weight: 750; letter-spacing: -.065em; color: #203e46; }
+.brand svg { width: 1.9rem; height: 1.9rem; color: #1a8189; }
+.brand span { color: #d56e59; margin-left: -.35rem; }
+.top p { color: #606c77; font-size: .8rem; margin-top: .4rem; }
+.top nav { display: flex; flex-wrap: wrap; gap: 1.7rem; }
+.top nav a { display: inline-flex; align-items: center; gap: .45rem; min-height: 2.75rem; font-size: .8rem; color: #394c56; text-decoration: none; }
+.top nav a:hover { color: #157f8b; }
+.bottom { display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; border-top: 1px solid #dce5e7; padding-top: 1.3rem; font-size: .7rem; color: #5f6b76; }
+.placeholders { display: flex; gap: 1.2rem; }
+.placeholders details { max-width: 12rem; }
+.placeholders summary { min-height: 2.75rem; cursor: pointer; list-style: none; }
+.placeholders summary::-webkit-details-marker { display: none; }
+.placeholders p { font-size: .7rem; margin-top: .25rem; }
+@media (max-width: 700px) { .top { flex-direction: column; align-items: flex-start; gap: 1rem; } .top nav { gap: 1.2rem; } .bottom { flex-wrap: wrap; } .placeholders { order: 3; width: 100%; } }

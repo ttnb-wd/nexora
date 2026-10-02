@@ -1,0 +1,39 @@
+.header { position: sticky; top: 0; z-index: 40; height: 5rem; background: #f8f9fc; border-bottom: 1px solid transparent; transition: background-color var(--duration-normal), box-shadow var(--duration-normal), border-color var(--duration-normal); }
+.header[data-elevated="true"] { background: #fffffff5; border-color: #e9e5f2; box-shadow: 0 5px 22px -12px rgb(54 34 98 / 0.18); }
+.inner { display: flex; align-items: center; justify-content: space-between; height: 100%; gap: 2rem; }
+.brand { display: flex; align-items: center; color: var(--foreground); font-size: 1.8rem; font-weight: 750; letter-spacing: -0.07em; text-decoration: none; line-height: 1; flex-shrink: 0; }
+.brand > span { display: grid; place-items: center; width: 2.15rem; height: 2.15rem; margin-right: 0.5rem; color: white; background: var(--gradient-brand); border-radius: 0.6rem; box-shadow: 0 4px 12px var(--glow-purple); }
+.brand svg { width: 1.9rem; height: 1.9rem; }
+.brand i { color: var(--brand-purple); font-style: normal; }
+.desktopNav { display: flex; align-items: center; gap: 1.75rem; margin-right: auto; margin-left: .5rem; }
+.desktopNav a, .signIn { color: #56516a; font-size: 0.875rem; font-weight: 600; text-decoration: none; padding: 0.6rem 0; white-space: nowrap; transition: color var(--duration-fast); }
+.desktopNav a:hover, .desktopNav a[aria-current="page"], .signIn:hover { color: var(--primary); }
+.desktopNav a[aria-current="page"] { box-shadow: 0 2px 0 var(--primary); }
+.actions { display: flex; align-items: center; gap: 1.25rem; }
+.search { display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.6rem 0.2rem; color: #6b637e; font-size: 0.75rem; cursor: default; }
+.search small { border: 1px solid #ded8ec; padding: 0.05rem 0.3rem; border-radius: 0.25rem; font-size: 0.55rem; }
+.getStarted { font-size: 0.75rem; }
+.menuTrigger { display: none; }
+.menuTrigger, .closeButton { align-items: center; justify-content: center; gap: 0.5rem; height: 2.75rem; padding: 0 0.8rem; border: 1px solid #dfd8ee; background: white; border-radius: 0.65rem; color: #5a4381; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
+.menuTrigger:hover, .closeButton:hover { background: #eee7ff; }
+.dialog { position: fixed; inset: 0; margin: 0; border: 0; padding: 0; width: 100%; max-width: none; height: 100dvh; max-height: none; background: rgb(37 24 65 / 0.2); color: var(--foreground); }
+.dialog::backdrop { background: transparent; }
+.drawer { position: absolute; right: 0; top: 0; width: min(100%, 28rem); height: 100%; overflow-y: auto; overscroll-behavior: contain; padding: 1.5rem; background: radial-gradient(ellipse at 100% 0%, #e8deff, transparent 50%), #fdfcff; box-shadow: -12px 0 50px rgb(68 43 120 / 0.12); }
+.drawerTop { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.drawerTop h2 { font-size: 1.05rem; font-weight: 650; letter-spacing: -0.04em; }
+.closeButton { width: 2.75rem; padding: 0; flex-shrink: 0; }
+.drawerEyebrow { margin-top: 3rem; font-size: 0.6rem; font-weight: 600; letter-spacing: 0.13em; color: #7a6795; }
+.drawerLinks { margin-block: 1.2rem 2rem; }
+.drawerLinks a { display: flex; align-items: center; gap: 0.9rem; padding-block: 1.1rem; border-bottom: 1px solid #e4ddee; text-decoration: none; color: var(--foreground); font-size: 1.85rem; font-weight: 600; letter-spacing: -0.06em; }
+.drawerLinks a:hover, .drawerLinks a[aria-current="page"] { color: var(--primary); }
+.drawerLinks small { font-size: 0.6rem; font-weight: 400; letter-spacing: 0; color: #8b77a7; }
+.drawerLinks svg { margin-left: auto; color: #8c6cc3; }
+.drawerSearch { display: flex; align-items: center; gap: 0.6rem; width: 100%; color: #746581; font-size: 0.85rem; padding: 1rem; background: #efebf7; border: 1px solid #e5dcef; border-radius: 0.75rem; }
+.drawerSearch span { margin-left: auto; font-size: 0.6rem; }
+.drawerActions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; margin-top: 1.5rem; }
+.drawerNote { margin-top: 2rem; font-size: 0.7rem; color: #756684; }
+@media (max-width: 1100px) { .inner { gap: 1.2rem; } .desktopNav { margin-left: 0; gap: 1rem; } .search span, .search small { display: none; } .actions { gap: 1rem; } }
+@media (max-width: 1023px) { .desktopNav, .actions { display: none; } .menuTrigger { display: flex; } .header { height: 4.5rem; } }
+@media (max-width: 540px) { .brand { font-size: 1.65rem; } .brand > span { width: 2rem; height: 2rem; } }
+.search { cursor: pointer; text-decoration: none; }
+.drawerSearch { text-decoration: none; }

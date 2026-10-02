@@ -1,0 +1,37 @@
+.artwork { --art-ink: #165c66; --art-background: linear-gradient(135deg, #b5f3e2, #62c7d1 55%, #258898); position: relative; isolation: isolate; overflow: hidden; min-height: 14.5rem; border-radius: 1rem; color: #202c3c; background: var(--art-background); }
+.cyan { --art-ink: #165c66; --art-background: linear-gradient(135deg, #b5f3e2, #62c7d1 55%, #258898); }
+.coral { --art-ink: #8b343c; --art-background: linear-gradient(135deg, #ffe1ce, #faaca0 55%, #ed787d); }
+.orange, .warm { --art-ink: #805019; --art-background: linear-gradient(135deg, #ffe7ba, #f9c469 55%, #ea9244); }
+.pink { --art-ink: #833c69; --art-background: linear-gradient(135deg, #f8d9ea, #eeb2ce 55%, #cf76aa); }
+.violet { --art-ink: #60378e; --art-background: linear-gradient(130deg, #efe5ff, #c5b0ed 55%, #9a86d7); }
+.mixed { --art-ink: #245965; --art-background: linear-gradient(125deg, #c4f1e7 5%, #8ccfce 40%, #f5cdbe 78%, #f4b1cb); }
+.art { position: absolute; inset: 0; transition: transform 650ms cubic-bezier(.22,1,.36,1); }
+.grid { position: absolute; inset: 0; background-image: linear-gradient(#fff2 1px, transparent 1px), linear-gradient(90deg, #fff2 1px, transparent 1px); background-size: 42px 42px; mask-image: linear-gradient(transparent, #000); }
+.ring { position: absolute; width: 13rem; height: 13rem; border: 2.7rem solid #ffffff75; border-radius: 50%; top: 16%; right: -3%; transform: rotate(-24deg) scaleY(.7); box-shadow: 10px 20px 30px #203b4120, inset 4px 7px 15px #ffffff90; }
+.orb { position: absolute; width: 5.5rem; height: 5.5rem; top: 45%; left: 16%; border-radius: 50%; background: radial-gradient(circle at 25% 20%, #fff, #ffffff70 40%, var(--art-ink)); box-shadow: 12px 18px 25px #203b4120; }
+.star { position: absolute; width: 9rem; height: 9rem; color: #fff9; right: 3%; bottom: -13%; }
+.pink .ring { border-radius: 22%; transform: rotate(-28deg); }
+.coral .ring { border-radius: 50% 50% 10% 10%; transform: rotate(15deg); }
+.orange .ring, .warm .ring { border-radius: 20%; transform: rotate(35deg) scaleY(.8); }
+.violet .ring { transform: rotate(25deg) scaleY(.5); }
+.mixed .ribbon { position: absolute; height: 5rem; width: 110%; background: linear-gradient(90deg, #ffffff05, #ffffff70, #ffffff10); transform: rotate(-28deg); top: 25%; left: -5%; border-radius: 50%; box-shadow: 0 15px 25px #30444a10; }
+.top { position: absolute; top: 1.1rem; left: 1.2rem; font-size: .58rem; font-weight: 700; letter-spacing: .12em; }
+.headline { position: absolute; z-index: 1; bottom: 2.6rem; left: 1.2rem; max-width: 75%; font-size: clamp(1.4rem, 2vw, 2rem); font-weight: 800; letter-spacing: -.06em; line-height: 1; }
+.caption { position: absolute; left: 1.2rem; bottom: 1rem; font-size: .65rem; }
+.badge { position: absolute; right: .9rem; top: .9rem; display: grid; text-align: center; background: #fffffff0; color: #283746; padding: .45rem .75rem; border-radius: .6rem; font-size: .7rem; box-shadow: 0 5px 15px #203b4110; }
+.badge b { font-size: 1.6rem; line-height: 1.15; }
+.hero { min-height: 29rem; }
+.hero .ring { width: 25rem; height: 25rem; border-width: 5rem; right: -15%; top: 12%; }
+.hero .orb { width: 9rem; height: 9rem; top: 42%; left: 12%; }
+.hero .headline { font-size: clamp(2.7rem, 4.5vw, 4.8rem); bottom: 3.2rem; max-width: 8ch; }
+.hero .caption { bottom: 1.5rem; font-size: .75rem; }
+.hero .star { width: 12rem; height: 12rem; right: 10%; bottom: -5%; }
+.editorial .headline { font-size: 2.3rem; max-width: 8ch; }
+.compact { min-height: 100%; }
+.compact .top, .compact .headline, .compact .caption { display: none; }
+.compact .ring { width: 8rem; height: 8rem; right: -1rem; }
+.compact .badge { top: .5rem; right: .5rem; }
+@media (hover: hover) { .artwork:hover .art { transform: scale(1.035) translateY(-3px); } }
+@media (max-width: 600px) { .hero { min-height: 21rem; } .hero .headline { font-size: 3rem; } .hero .ring { width: 21rem; height: 21rem; top: -10%; } }
+@media (prefers-reduced-motion: reduce) { .artwork:hover .art { transform: none; } }
+@media (forced-colors: active) { .artwork { border: 1px solid CanvasText; } }

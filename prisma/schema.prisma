@@ -1,0 +1,156 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum OrganizationRole {
+  OWNER
+  ADMIN
+  EDITOR
+  MEMBER
+}
+
+enum EventType {
+  IN_PERSON
+  ONLINE
+  HYBRID
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+  COMPLETED
+  ARCHIVED
+}
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  image         String?
+  createdAt     DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime @updatedAt @db.Timestamptz(3)
+  sessions      Session[]
+  accounts      Account[]
+  memberships   OrganizationMember[]
+  createdEvents Event[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime @db.Timestamptz(3)
+  token     String   @unique
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime? @db.Timestamptz(3)
+  refreshTokenExpiresAt DateTime? @db.Timestamptz(3)
+  scope                 String?
+  // Better Auth stores its salted password hash here, never plaintext.
+  password              String?
+  createdAt             DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime  @updatedAt @db.Timestamptz(3)
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime @db.Timestamptz(3)
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @db.Timestamptz(3)
+
+  @@index([identifier])
+}
+
+// Shared rate limits survive process restarts and multiple application instances.
+model RateLimit {
+  id          String @id @default(cuid())
+  key         String @unique
+  count       Int
+  lastRequest BigInt
+}
+
+model Organization {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  shortName   String
+  description String
+  industry    String
+  city        String
+  region      String
+  website     String?
+  visualTheme String
+  logoVariant String
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(3)
+  members     OrganizationMember[]
+  events      Event[]
+}
+
+model OrganizationMember {
+  id             String           @id @default(cuid())
+  userId         String
+  organizationId String
+  role           OrganizationRole @default(MEMBER)
+  createdAt      DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime         @updatedAt @db.Timestamptz(3)
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([organizationId, role])
+}
+
+model Event {
+  id                   String        @id @default(cuid())
+  slug                 String        @unique
+  title                String
+  description          String?
+  coverImage           String?
+  startAt              DateTime      @db.Timestamptz(3)
+  endAt                DateTime      @db.Timestamptz(3)
+  timezone             String        @default("Asia/Yangon")
+  eventType            EventType
+  status               EventStatus   @default(DRAFT)
+  capacity             Int?
+  registrationDeadline DateTime?     @db.Timestamptz(3)
+  creatorId            String
+  organizationId       String?
+  createdAt            DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt            DateTime      @updatedAt @db.Timestamptz(3)
+  // Preserve authored events; account/org deletion requires an explicit future workflow.
+  creator              User          @relation(fields: [creatorId], references: [id], onDelete: Restrict)
+  organization         Organization? @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+
+  @@index([creatorId])
+  @@index([organizationId, startAt])
+  @@index([status, startAt])
+}

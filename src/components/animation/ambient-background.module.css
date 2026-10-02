@@ -1,0 +1,7 @@
+.ambient { position: absolute; z-index: -1; inset: 0; overflow: clip; pointer-events: none; }
+.mesh { position: absolute; inset: 0; background: radial-gradient(ellipse at 78% 40%, #e1d8ff, transparent 46%), radial-gradient(ellipse at 98% 68%, #d7f2ff, transparent 35%), radial-gradient(ellipse at 48% 95%, #fce9df, transparent 40%); background-size: 120% 120%; animation: colorDrift 20s ease-in-out infinite alternate; }
+.violetLight, .cyanLight { position: absolute; width: min(40vw, 30rem); aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, var(--glow-purple), transparent 65%); right: 3%; top: 5%; }
+.cyanLight { right: 25%; top: 45%; width: min(30vw, 22rem); background: radial-gradient(circle, var(--glow-cyan), transparent 65%); }
+@keyframes colorDrift { from { background-position: 0% 0%; } to { background-position: 100% 70%; } }
+@media (max-width: 540px) { .cyanLight { display: none; } .violetLight { width: 80vw; top: 45%; } .mesh { animation-duration: 28s; } }
+@media (prefers-reduced-motion: reduce) { .mesh { animation: none; } }

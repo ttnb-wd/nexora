@@ -1,0 +1,10 @@
+.section { border-block: 1px solid #ebe7f2; background: white; padding-block: 1.5rem 1.8rem; }
+.heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+.heading h2 { font-size: 0.95rem; font-weight: 600; letter-spacing: -0.025em; }
+.heading p { color: var(--text-muted); font-size: 0.65rem; }
+.list { display: flex; gap: 0.75rem; overflow-x: auto; padding: 0.4rem 0.25rem 0.8rem; margin: -0.25rem; list-style: none; scrollbar-width: thin; scrollbar-color: #d3c7e8 transparent; }
+.list li { display: flex; align-items: center; gap: 0.7rem; white-space: nowrap; border: 1px solid #e6e1ee; padding: 0.6rem 0.9rem 0.6rem 0.6rem; border-radius: 0.7rem; color: #51465f; font-size: 0.8rem; font-weight: 550; transition: transform var(--duration-fast) var(--ease-standard), border-color var(--duration-fast), background-color var(--duration-fast); }
+.list li > span { display: grid; place-items: center; width: 1.8rem; height: 1.8rem; border-radius: 0.45rem; }
+@media (hover: hover) { .list li:hover { transform: translateY(-2px); border-color: #c8b8e0; background: #fbf9ff; } }
+@media (max-width: 540px) { .heading { align-items: flex-start; flex-direction: column; gap: 0.25rem; } .list { padding-bottom: 0.7rem; } }
+@media (prefers-reduced-motion: reduce) { .list li:hover { transform: none; } }

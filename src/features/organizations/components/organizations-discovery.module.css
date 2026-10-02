@@ -1,0 +1,37 @@
+.topRow { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: clamp(2rem, 4vw, 4rem); align-items: center; }
+.intro { min-width: 0; padding-block: 1rem; }
+.intro h1 { font-size: clamp(2.3rem, 3.5vw, 3.6rem); font-weight: 750; line-height: 1.08; letter-spacing: -.06em; max-width: 16ch; text-wrap: balance; margin-bottom: 1.2rem; }
+.intro h1 span { color: #277b83; background: linear-gradient(105deg, #287b82, #3e778f 55%, #a95160); background-clip: text; -webkit-text-fill-color: transparent; }
+.intro p { max-width: 37ch; font-size: .92rem; line-height: 1.85; color: #647080; }
+.intro .eyebrow { display: flex; align-items: center; gap: .5rem; max-width: none; font-size: .6rem; font-weight: 650; letter-spacing: .1em; color: #4e7377; margin-bottom: 1rem; }
+.spotlight { padding: 1.3rem; min-width: 0; border: 1px solid #dce5e7; border-radius: 1.25rem; background: linear-gradient(140deg, #fff 35%, var(--org-wash)); box-shadow: 0 14px 35px -28px #243a5350; transition: transform 250ms ease, box-shadow 250ms ease; }
+.spotlightLabel { color: var(--org-ink); font-size: .6rem; letter-spacing: .12em; font-weight: 650; margin-bottom: 1rem; }
+.spotlightIdentity { display: grid; grid-template-columns: 8rem minmax(0, 1fr); gap: 1.15rem; align-items: stretch; }
+.spotlightArtwork { min-height: 10rem; height: 100%; border-radius: .85rem; }
+.spotlightArtwork > strong { font-size: 3.2rem; bottom: .5rem; left: .7rem; }
+.spotlightArtwork > span { display: none; }
+.spotlightArtwork > svg { width: 3rem; height: 3rem; right: .7rem; top: 1rem; }
+.spotlightArtwork > div { animation: artwork-drift 8s ease-in-out infinite alternate; }
+.metadata { display: flex; flex-wrap: wrap; gap: .5rem .8rem; color: var(--org-ink); font-size: .65rem; font-weight: 600; }
+.metadata span + span { display: inline-flex; align-items: center; gap: .3rem; color: #697080; font-weight: 400; }
+.spotlightCopy h2 { font-size: clamp(1.2rem, 1.7vw, 1.65rem); font-weight: 650; letter-spacing: -.04em; line-height: 1.2; margin-block: .65rem; }
+.spotlightCopy h2 a { color: #273746; text-decoration: none; }
+.spotlightCopy > p { font-size: .8rem; line-height: 1.7; color: #636d7b; }
+.activity { display: inline-block; margin-top: .7rem; font-size: .65rem; font-weight: 600; color: var(--org-ink); background: var(--org-wash); padding: .3rem .6rem; border: 1px solid #314d6015; border-radius: 2rem; }
+.nextEvent { display: flex; align-items: center; gap: 1rem; padding: .9rem 0; margin-top: 1rem; border-block: 1px solid #314d6015; color: #334753; text-decoration: none; }
+.nextDate { flex-shrink: 0; display: grid; gap: .35rem; }
+.nextDate > span { color: #5e6f7c; font-size: .5rem; letter-spacing: .1em; font-weight: 650; }
+.nextDate time { color: var(--org-ink); font-size: .95rem; font-weight: 600; }
+.nextTitle { flex: 1; min-width: 0; font-size: .83rem; font-weight: 600; line-height: 1.4; }
+.nextTitle > span { display: block; margin-top: .25rem; color: #5e6f7c; font-size: .65rem; font-weight: 400; }
+.nextEvent > svg { flex-shrink: 0; transition: transform 200ms ease; }
+.spotlightActions { display: flex; align-items: center; justify-content: space-between; gap: .8rem; padding-top: 1rem; }
+.spotlightActions > a { display: inline-flex; align-items: center; gap: .4rem; min-height: 2.75rem; font-size: .75rem; font-weight: 550; color: var(--org-ink); text-decoration: none; }
+.directory { padding-top: 2.8rem; }
+.gridCard > article > div:first-child { min-height: 10rem; }
+@keyframes artwork-drift { from { transform: translateY(0) scale(1); } to { transform: translateY(-4px) scale(1.04); } }
+@media (hover: hover) { .spotlight:hover { transform: translateY(-3px); box-shadow: 0 20px 35px -25px #243a5360; } .nextEvent:hover > svg { transform: translateX(3px); } }
+@media (max-width: 1023px) { .topRow { grid-template-columns: 1fr; gap: 1.6rem; } .intro h1 { max-width: 23ch; font-size: 2.7rem; } .intro p { max-width: 55ch; } .spotlightIdentity { grid-template-columns: 9rem minmax(0, 1fr); } .spotlightArtwork { min-height: 9rem; } }
+@media (max-width: 600px) { .topRow { gap: 1.2rem; } .intro { padding-top: 0; } .intro h1 { font-size: clamp(2rem, 8vw, 2.7rem); } .intro p { font-size: .85rem; } .intro .eyebrow { font-size: .53rem; letter-spacing: .08em; } .spotlight { padding: 1.1rem; } .spotlightIdentity { grid-template-columns: 5.5rem minmax(0, 1fr); gap: .8rem; } .spotlightArtwork { min-height: 8.5rem; } .spotlightArtwork > strong { font-size: 2.4rem; left: .4rem; } .spotlightArtwork > svg { width: 2.5rem; height: 2.5rem; right: .4rem; } .spotlightCopy h2 { font-size: 1.3rem; } .spotlightCopy > p { font-size: .75rem; } .spotlightActions { flex-wrap: wrap; } .spotlightActions > a { font-size: .7rem; } .directory { padding-top: 2rem; } .nextEvent { gap: .8rem; } }
+@media (prefers-reduced-motion: reduce) { .spotlightArtwork > div { animation: none; } .spotlight, .nextEvent > svg { transition: none; } .spotlight:hover, .nextEvent:hover > svg { transform: none; } }
+@media (forced-colors: active) { .spotlight, .activity { border: 1px solid CanvasText; } .intro h1 span { background: none; -webkit-text-fill-color: CanvasText; } }

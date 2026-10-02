@@ -1,0 +1,53 @@
+.preview { background: #f4f4fa; scroll-margin-top: 1rem; border-top: 1px solid #e5e3ef; }
+.previewHeader { display: flex; align-items: flex-end; justify-content: space-between; gap: 2rem; margin-bottom: 2.5rem; }
+.previewEyebrow { display: flex; align-items: center; gap: 0.65rem; font-size: 0.75rem; letter-spacing: 0.045em; font-weight: 600; color: #65547c; margin-bottom: 1.2rem; }
+.previewIntro { max-width: 20rem; color: var(--text-muted); font-size: 0.9rem; line-height: 1.8; padding-bottom: 0.3rem; }
+.previewGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+.typeTile, .paletteTile, .controlsTile, .surfacesTile { position: relative; overflow: hidden; border: 1px solid #e2e0ee; border-radius: var(--radius-lg); padding: clamp(1.4rem, 3vw, 2rem); min-width: 0; background: white; box-shadow: var(--shadow-sm); }
+.tileLabel { display: block; color: #6e607f; font-size: 0.58rem; font-weight: 650; letter-spacing: 0.12em; margin-bottom: 1.3rem; }
+.typeTile { background: radial-gradient(ellipse at 95% 0%, #e5ddff, transparent 70%), #fff; }
+.typeStar { position: absolute; right: 1.7rem; top: 1.5rem; width: 2.5rem; height: 2.5rem; color: #a686e9; }
+.typeDisplay { font-size: clamp(2.3rem, 3.3vw, 3.2rem); font-weight: 700; letter-spacing: -0.055em; line-height: 1.2; margin-bottom: 1rem; }
+.typeSample { display: flex; align-items: center; gap: 1.2rem; margin-top: 1.8rem; padding-top: 1.2rem; border-top: 1px solid #eae5f2; }
+.typeSample > span { font-size: 2.5rem; font-weight: 650; letter-spacing: -0.08em; }
+.typeSample strong { font-size: 0.8rem; font-weight: 600; }
+.typeSample p { color: var(--text-muted); font-size: 0.68rem; margin-top: 0.15rem; }
+.paletteTile h3 { margin-bottom: 1.5rem; }
+.swatches { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.5rem; }
+.swatches > div { min-width: 0; }
+.swatches span { display: block; height: 4.2rem; border-radius: 0.5rem; margin-bottom: 0.65rem; }
+.swatches strong { display: block; font-size: 0.65rem; font-weight: 600; }
+.swatches small { font-family: var(--font-code); color: var(--text-muted); font-size: 0.54rem; }
+.gradientSamples { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-top: 1.5rem; }
+.gradientSamples span { height: 3rem; padding: 0.85rem 0.7rem; border-radius: 0.4rem; font-size: 0.65rem; color: #51416b; font-weight: 600; background: var(--gradient-aurora); }
+.gradientSamples span:nth-child(2) { background: var(--gradient-warm); }
+.gradientSamples span:nth-child(3) { background: var(--gradient-cool); }
+.controlsTile > p { margin-top: 0.7rem; font-size: 0.75rem; }
+.buttonSamples { display: flex; flex-wrap: wrap; gap: 0.7rem; margin-top: 1.4rem; }
+.buttonSizes { display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem; border-top: 1px solid #eeebf4; padding-top: 1.2rem; margin-top: 1.3rem; }
+.surfaceSamples { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; margin-top: 1.5rem; }
+.surfaceSamples > div { padding: 1rem 1.1rem; border-radius: 0.7rem; }
+.surfaceSamples svg { width: 1.1rem; height: 1.1rem; color: #8963d1; margin-bottom: 0.7rem; }
+.surfaceSamples strong { display: block; font-size: 0.8rem; font-weight: 600; }
+.surfaceSamples small { color: var(--text-muted); font-size: 0.65rem; }
+.motionStrip { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr; gap: 2rem; margin-top: 1.2rem; padding: 2rem; border: 1px solid #e0d9f1; background: linear-gradient(115deg, #ece7fc, #f7f4ff 50%, #ebf2ff); border-radius: var(--radius-lg); }
+.motionHeading .tileLabel { margin-bottom: 0.75rem; }
+.motionHeading h3 { font-size: 1.2rem; }
+.motionHeading p { font-size: 0.68rem; color: var(--text-muted); margin-top: 0.7rem; }
+.motionSample { align-self: center; }
+.motionSample > strong { display: block; font-weight: 600; font-size: 0.75rem; margin-top: 0.8rem; }
+.motionSample > small { color: var(--text-muted); font-size: 0.62rem; }
+.motionTrack { position: relative; display: block; height: 1.6rem; border-bottom: 1px solid #d1c3e9; }
+.motionTrack i { display: block; position: absolute; height: 0.9rem; width: 0.9rem; border-radius: 0.25rem; background: var(--gradient-brand); bottom: 0.4rem; animation: tokenTravel 3s var(--ease-standard) infinite alternate; }
+.motionSample:nth-child(3) i { animation-duration: 5s; background: linear-gradient(115deg, var(--electric-blue), #9676e8); }
+.motionSample:nth-child(4) i { animation-duration: var(--duration-gradient); background: linear-gradient(115deg, #cb6aab, #a385f0); }
+.previewFooter { display: flex; justify-content: space-between; align-items: center; gap: 1rem; border-top: 1px solid #e1dfea; padding-top: 2rem; margin-top: 3rem; color: var(--text-muted); font-size: 0.7rem; }
+.footerBrand { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.07em; color: #655082; }
+.previewFooter > span:last-child { font-size: 0.55rem; letter-spacing: 0.1em; }
+
+
+.previewEyebrow > span { width: 0.45rem; height: 0.45rem; border-radius: 50%; background: var(--brand-purple); box-shadow: 0 0 0 4px var(--glow-purple); flex-shrink: 0; }
+@keyframes tokenTravel { from { transform: translateX(0); } to { transform: translateX(6rem); } }
+@media (max-width: 900px) { .previewHeader { align-items: flex-start; } .previewGrid { grid-template-columns: 1fr; } .motionStrip { grid-template-columns: repeat(3, 1fr); gap: 1.5rem; } .motionHeading { grid-column: 1 / -1; } }
+@media (max-width: 540px) { .previewHeader { flex-direction: column; gap: 1rem; margin-bottom: 1.8rem; } .previewIntro { font-size: 0.8rem; } .typeDisplay { font-size: 2.35rem; } .swatches { grid-template-columns: repeat(3, 1fr); row-gap: 1rem; } .swatches span { height: 3rem; } .typeSample { gap: 0.8rem; } .surfaceSamples { gap: 0.65rem; } .surfaceSamples > div { padding: 0.85rem; } .motionStrip { grid-template-columns: 1fr; padding: 1.4rem; } .motionSample { display: grid; grid-template-columns: 1fr 1.1fr; column-gap: 1rem; } .motionTrack { grid-row: span 2; align-self: center; } .motionSample > strong { margin-top: 0; } .previewFooter { flex-wrap: wrap; gap: 0.7rem; margin-top: 2rem; } .previewFooter p { width: calc(100% - 5rem); text-align: right; font-size: 0.6rem; } }
+@media (prefers-reduced-motion: reduce) { .motionTrack i { animation: none; } }
