@@ -1,4 +1,5 @@
 import './support/typescript-loader.mjs';
+import { getServerActionForm } from './support/action-form.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
@@ -83,7 +84,7 @@ function decode(value) {return value.replace(/&quot;/g,'"').replace(/&#x27;/g,"'
 async function submit(path,cookie,fields,html) {
  html??=await (await request(path,cookie)).text();
  const form=new FormData();
- for(const match of html.matchAll(/<input\b[^>]*>/g)) {
+ for(const match of getServerActionForm(html).matchAll(/<input\b[^>]*>/g)) {
   const name=match[0].match(/\bname="([^"]*)"/)?.[1];
   if(name?.startsWith('$ACTION'))form.append(decode(name),decode(match[0].match(/\bvalue="([^"]*)"/)?.[1]??''));
  }

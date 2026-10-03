@@ -51,6 +51,14 @@
 .overview aside { display: grid; gap: 1rem; }
 .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 1.5rem; }
 .grid h2 { font-size: 1.2rem; }
+.contentSections { display: grid; gap: 1.5rem; margin-top: 1.5rem; }
+.contentList { padding: 0; list-style: none; }
+.contentItem { padding-block: 1.25rem; border-bottom: 1px solid var(--border); }
+.contentItem h3 { font-size: 1.1rem; font-weight: 650; overflow-wrap: anywhere; }
+.contentEdit { margin-top: 1rem; }
+.contentEdit summary { cursor: pointer; color: var(--primary); font-weight: 600; overflow-wrap: anywhere; }
+.contentSections :is(input, textarea, select, summary, a, button):focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+.srOnly { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .transition { padding: 1.5rem; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
 .transition h2 { font-size: 1.2rem; font-weight: 650; }
 .transition p { color: var(--text-muted); margin-top: .75rem; }

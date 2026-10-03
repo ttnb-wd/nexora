@@ -1,6 +1,6 @@
 import "server-only";
 import { getDb } from "@/lib/db";
-import { mapPublicEvent, publicEventSelect } from "./public-event-mapper";
+import { mapPublicEvent, publicEventSelect, publicEventDetailSelect } from "./public-event-mapper";
 
 const discoveryLimit = 100;
 
@@ -21,7 +21,7 @@ export async function getCompletedPublishedEvents(limit = 20, now = new Date()) 
 }
 
 export async function getPublishedEventBySlug(slug: string, now = new Date()) {
-  const record = await getDb().event.findFirst({ where: { slug, status: { in: ["PUBLISHED", "COMPLETED"] } }, select: publicEventSelect });
+  const record = await getDb().event.findFirst({ where: { slug, status: { in: ["PUBLISHED", "COMPLETED"] } }, select: publicEventDetailSelect });
   return record ? mapPublicEvent(record, now) : null;
 }
 

@@ -56,7 +56,9 @@ try {
   const detail = await (await request(`/events/s11-${run}-upcoming`)).text();
   assert.ok(detail.includes(`/companies/${orgSlug}`) && detail.includes(org.description));
   const individual = await (await request(`/events/s11-${run}-individual`)).text();
-  assert.ok(individual.includes('Step11 Individual Organizer') && !individual.includes(`/companies/${orgSlug}`));
+  // Related event cards can legitimately link to this organization; inspect the actual organizer section.
+  const individualOrganizer = individual.match(/<section\b[^>]*\bid="organizer"[^>]*>[\s\S]*?<\/section>/)?.[0];
+  assert.ok(individualOrganizer?.includes('Step11 Individual Organizer') && !individualOrganizer.includes(`/companies/${orgSlug}`));
   for (const page of [html, detail, individual, await (await request('/companies')).text()]) {
     for (const secret of [userId, orgId, `step11-${run}@example.com`, '"members"', '"creatorId"', '"userId"', '"accounts"']) assert.ok(!page.includes(secret), `Private field leaked: ${secret}`);
   }

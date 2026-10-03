@@ -44,7 +44,7 @@ export function EventDetailExperience({ event, related, participation }: { event
   const reduced = useReducedMotion();
   const { scrollYProgress } = useScroll({ target: page, offset: ["start start", "end end"] });
   const interactions = { event, joined, saved: bookmark.saved, pending: pending || bookmark.pending, message: message || bookmark.message, availability: participation.availability, onJoin: () => changeRegistration(false), onCancel: () => changeRegistration(true), onSave: bookmark.toggle };
-  const showResources = event.source !== "database" || event.details.resources.length > 0;
+  const showResources = event.source !== "database" || event.details.resources.length > 0 || event.status === "completed";
   const sections = ["About", ...(event.details.agenda.length ? ["Agenda"] : []), ...(event.details.speakers.length ? ["Speakers"] : []), "Venue", "Organizer", ...(showResources ? ["Resources"] : [])];
   return <main id="main-content" tabIndex={-1} ref={page} className={styles.page} data-event-detail>
     {!reduced && <motion.div className={styles.progress} style={{ scaleX: scrollYProgress }} aria-hidden="true" />}
@@ -53,7 +53,7 @@ export function EventDetailExperience({ event, related, participation }: { event
       <div className={styles.contentGrid}><div className={styles.content}>
         <DetailSection title="About" index={1}><div className={styles.about}>{event.details.about.length ? event.details.about.map((paragraph) => <p key={paragraph}>{paragraph}</p>) : <p>Details coming soon from the organizer.</p>}</div><ul className={styles.tags} aria-label="Event interests">{event.tags.map((tag) => <li key={tag}>{tag}</li>)}</ul></DetailSection>
         {event.details.agenda.length > 0 && <DetailSection title="Agenda" index={2}><p className={styles.sectionNote}>All times in {event.timezone ?? "Myanmar Time (MMT)"}.</p><EventAgenda event={event} /></DetailSection>}
-        {event.details.speakers.length > 0 && <DetailSection title="Speakers" index={3}><EventSpeakers speakers={event.details.speakers} /></DetailSection>}
+        {event.details.speakers.length > 0 && <DetailSection title="Speakers" index={sections.indexOf("Speakers") + 1}><EventSpeakers speakers={event.details.speakers} /></DetailSection>}
         <DetailSection title="Venue" index={sections.indexOf("Venue") + 1}><EventVenue event={event} /></DetailSection>
         <DetailSection title="Organizer" index={sections.indexOf("Organizer") + 1}><EventOrganizer event={event} /></DetailSection>
         {showResources && <DetailSection title="Resources" index={sections.indexOf("Resources") + 1}><EventResources event={event} /></DetailSection>}

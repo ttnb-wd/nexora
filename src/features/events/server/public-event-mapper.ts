@@ -1,4 +1,5 @@
 import type { Prisma } from "@/generated/prisma/client";
+import { isSafeResourceUrl, resourceTypeLabels } from "../content-schemas";
 import { eventCategories, type PublicEvent, type EventCategory, type EventType, type EventVisual } from "../types";
 
 // This selection is the public data boundary. Never select email, account, member, or auth fields.
@@ -11,6 +12,13 @@ export const publicEventSelect = {
 } satisfies Prisma.EventSelect;
 
 export type PublicEventRecord = Prisma.EventGetPayload<{ select: typeof publicEventSelect }>;
+export const publicEventDetailSelect = {
+  ...publicEventSelect,
+  agendaItems: { select: { title: true, description: true, startAt: true, endAt: true, locationLabel: true }, orderBy: [{ sortOrder: "asc" }, { id: "asc" }] },
+  speakers: { select: { name: true, role: true, company: true, bio: true }, orderBy: [{ sortOrder: "asc" }, { id: "asc" }] },
+  resources: { select: { title: true, type: true, url: true, description: true }, orderBy: [{ sortOrder: "asc" }, { id: "asc" }] },
+} satisfies Prisma.EventSelect;
+type DetailRecord = Prisma.EventGetPayload<{ select: typeof publicEventDetailSelect }>;
 
 const tones: EventVisual[] = ["violet", "cyan", "coral", "orange", "warm", "pink", "mixed"];
 const categoryTones: Record<EventCategory, EventVisual> = {
@@ -33,7 +41,7 @@ function previewText(value: string, max: number) {
   return text.length > max ? `${text.slice(0, max).trimEnd()}…` : text;
 }
 
-export function mapPublicEvent(record: PublicEventRecord, now = new Date()): PublicEvent {
+export function mapPublicEvent(record: PublicEventRecord & Partial<Pick<DetailRecord, "agendaItems" | "speakers" | "resources">>, now = new Date()): PublicEvent {
   const category = eventCategories.find((value) => value === record.category) ?? "Other";
   const type: EventType = record.eventType === "IN_PERSON" ? "In person" : record.eventType === "ONLINE" ? "Online" : "Hybrid";
   const tone = tones.includes(record.organization?.visualTheme as EventVisual)
@@ -57,6 +65,12 @@ export function mapPublicEvent(record: PublicEventRecord, now = new Date()): Pub
     description, visual: { tone, headline: previewText(record.title, 32), caption: previewText(description ?? category, 80) },
     tags: record.category ? [record.category] : [],
     status: ended ? "completed" : "upcoming",
-    details: { about, agenda: [], speakers: [], venue: { address: "", guidance: "" }, availability: ended ? "This event has ended" : "Event details available from the organizer", resources: [] },
+    details: {
+      about,
+      agenda: (record.agendaItems ?? []).map((item) => ({ title: item.title, description: item.description ?? "", startAt: item.startAt.toISOString(), endAt: item.endAt?.toISOString(), time: `${timeInZone(item.startAt, record.timezone)}${item.endAt ? ` – ${timeInZone(item.endAt, record.timezone)}` : ""}`, locationLabel: item.locationLabel ?? undefined })),
+      speakers: (record.speakers ?? []).map((speaker) => ({ name: speaker.name, role: speaker.role ?? "", organizationId: "", organizationName: speaker.company ?? undefined, bio: speaker.bio ?? "", tone })),
+      venue: { address: "", guidance: "" }, availability: ended ? "This event has ended" : "Event details available from the organizer",
+      resources: (record.resources ?? []).filter((resource) => isSafeResourceUrl(resource.url)).map((resource) => ({ title: resource.title, type: resourceTypeLabels[resource.type], url: resource.url, description: resource.description ?? "" })),
+    },
   };
 }

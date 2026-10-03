@@ -5,9 +5,9 @@ export type EventType = (typeof eventTypes)[number];
 export type EventVisual = "violet" | "cyan" | "coral" | "orange" | "warm" | "pink" | "mixed";
 export type EventCardVariant = "featured" | "standard" | "compact" | "editorial";
 
-export interface AgendaItem { time: string; title: string; description: string }
+export interface AgendaItem { time: string; title: string; description: string; startAt?: string; endAt?: string; locationLabel?: string }
 export interface EventSpeaker { name: string; role: string; organizationId: string; organizationName?: string; bio: string; tone: EventVisual }
-export interface EventResource { type: "Slides" | "Recording" | "Links" | "Notes"; title: string; description: string }
+export interface EventResource { type: "Slides" | "Recording" | "Links" | "Notes" | "Document" | "Other"; title: string; description: string; url?: string }
 export interface EventDetails {
   about: string[];
   agenda: AgendaItem[];

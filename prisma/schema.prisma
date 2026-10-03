@@ -163,10 +163,69 @@ model Event {
 
   registrations        EventRegistration[]
   bookmarks            EventBookmark[]
+  agendaItems          EventAgendaItem[]
+  speakers             EventSpeaker[]
+  resources            EventResource[]
 
   @@index([creatorId])
   @@index([organizationId, startAt])
   @@index([status, startAt])
+}
+
+enum EventResourceType {
+  SLIDES
+  RECORDING
+  LINK
+  NOTES
+  DOCUMENT
+  OTHER
+}
+
+model EventAgendaItem {
+  id            String @id @default(cuid())
+  eventId       String
+  title         String
+  description   String?
+  startAt       DateTime @db.Timestamptz(3)
+  endAt         DateTime? @db.Timestamptz(3)
+  locationLabel String?
+  sortOrder     Int
+  createdAt     DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime @updatedAt @db.Timestamptz(3)
+  event         Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, sortOrder])
+}
+
+model EventSpeaker {
+  id        String @id @default(cuid())
+  eventId   String
+  name      String
+  role      String?
+  company   String?
+  bio       String?
+  imageUrl  String?
+  sortOrder Int
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  event     Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, sortOrder])
+}
+
+model EventResource {
+  id          String @id @default(cuid())
+  eventId     String
+  title       String
+  type        EventResourceType
+  url         String
+  description String?
+  sortOrder   Int
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(3)
+  event       Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, sortOrder])
 }
 
 enum RegistrationStatus {

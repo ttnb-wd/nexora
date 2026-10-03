@@ -8,6 +8,7 @@ import { formatManagedEventDate } from "../timezone";
 import { EventTransitionForm } from "./event-transition-form";
 import { getEventRegistrationCount } from "@/features/participation/server/service";
 import styles from "./event-management.module.css";
+import { EventContentManagement } from "./event-content-management";
 
 export async function EventManagementPage({ eventId, scope }: { eventId: string; scope: string | null }) {
   const { event, user } = await requireEventAccess(eventId, scope, false);
@@ -21,9 +22,9 @@ export async function EventManagementPage({ eventId, scope }: { eventId: string;
       <section className={styles.card}><h2>Registration details</h2><p>{event.capacity ? `Capacity: ${event.capacity}` : "No capacity limit specified"}</p>{event.registrationDeadline && <p>Closes {formatManagedEventDate(event.registrationDeadline, event.timezone)} ({event.timezone})</p>}<p className={styles.hint}>Registrations: {registrationCount}</p></section>
       {canManage && event.status === "DRAFT" && <EventTransitionForm action={publishEvent.bind(null, event.id, scope)} kind="publish" />}
       {canManage && event.status === "PUBLISHED" && <EventTransitionForm action={cancelEvent.bind(null, event.id, scope)} kind="cancel" />}
-      {!["DRAFT", "PUBLISHED"].includes(event.status) && <p className={styles.note}>This event is read-only. Cancelled events cannot be republished.</p>}
+      {!["DRAFT", "PUBLISHED"].includes(event.status) && <p className={styles.note}>{event.status === "COMPLETED" ? "Agenda and speakers are read-only. Authorized organizers can still publish resources." : "This event is read-only. Cancelled events cannot be republished."}</p>}
       {!canManage && <p className={styles.note}>Only owners, admins, and editors can manage this organization’s events.</p>}
       <p className={styles.hint}>{["PUBLISHED", "COMPLETED"].includes(event.status) ? <Link href={`/events/${event.slug}`}>View public event</Link> : "This event is not publicly accessible."}</p>
-    </aside></div><div className={styles.grid}>{["Agenda", "Speakers", "Resources"].map((section) => <section className={styles.card} key={section}><h2>{section}</h2><p>{section} management will be added in a future step.</p></section>)}</div>
+    </aside></div><EventContentManagement event={event} scope={scope} canManage={canManage} />
   </Container></main>;
 }
