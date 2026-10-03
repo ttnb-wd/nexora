@@ -57,9 +57,9 @@ async function safetyGuard() {
 async function request(path, options = {}, authenticated = false) {
   return fetch(`${origin}${path}`, { ...options, headers: { Origin: origin, 'X-Forwarded-For': ip, ...(authenticated ? { Cookie: actor.cookie } : {}), ...options.headers }, signal: AbortSignal.timeout(65000) });
 }
-async function job(header = `Bearer ${secret}`, expected = 200) {
+async function job(header = `Bearer ${secret}`, expected = 200, cron = false) {
   await safetyGuard();
-  const response = await request('/api/internal/reminders/run', { method: 'POST', headers: header ? { Authorization: header } : {} });
+  const response = await request(cron ? '/api/cron/reminders' : '/api/internal/reminders/run', { method: cron ? 'GET' : 'POST', headers: header ? { Authorization: header } : {} });
   const body = await response.text();
   for (const value of sensitive) assert.ok(!body.includes(value), 'Private data in job response');
   assert.equal(response.status, expected);
@@ -129,6 +129,7 @@ try {
   stage = 'security';
   const prior = await db.notification.count();
   await job(null, 401); await job('Bearer deliberately-wrong', 401);
+  await job(null, 401, true); await job('Bearer deliberately-wrong', 401, true);
   assert.equal(await db.notification.count(), prior); pass('missing/wrong secret rejected without mutation');
   stage = 'four durations';
   assert.equal((await job()).delivered, 4);
@@ -165,6 +166,16 @@ try {
     assert.equal((await notifications(due[0])).length, 1); ledger.concurrency.push(results); save();
   }
   pass('three overlapping HTTP execution pairs: one delivery and one duplicate skip each');
+  stage = 'Vercel cron adapter'; await reschedule(due[0]);
+  const cron = await job(`Bearer ${secret}`, 200, true); assert.equal(cron.delivered, 1);
+  assert.equal((await job(`Bearer ${secret}`, 200, true)).delivered, 0);
+  assert.equal((await job()).delivered, 0); assert.equal((await notifications(due[0])).length, 1);
+  const cronBefore = await db.notification.count();
+  const targeting = await request('/api/cron/reminders?userId=other&now=2099-01-01', { headers: { Authorization: `Bearer ${secret}` } });
+  assert.equal(targeting.status, 400); await targeting.text();
+  const head = await request('/api/cron/reminders', { method: 'HEAD', headers: { Authorization: `Bearer ${secret}` } });
+  assert.equal(head.status, 405); assert.equal(await db.notification.count(), cronBefore);
+  ledger.cron = cron; pass('real GET cron auth/delivery/repeat, shared POST dedupe, query rejection and non-mutating HEAD');
   stage = 'local runner'; await reschedule(due[1]); await safetyGuard();
   const runner = await childCommand(['scripts/run-reminders.mjs'], { APP_URL: origin, PUBLIC_APP_URL: ' ', CRON_SECRET: secret });
   assert.equal(runner.code, 0); const runnerResult = JSON.parse(runner.stdout.trim()); assert.equal(runnerResult.delivered, 1);

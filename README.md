@@ -172,15 +172,88 @@ does not use the LAN/public ticket URL. It refuses redirects and non-HTTPS remot
 origins to protect the bearer token. This command performs real writes: use it
 only when reminder delivery against the configured database is intended.
 
-For deployment, arrange an existing scheduled HTTP caller to POST to the deployed
-HTTPS endpoint every minute with the bearer header and no body/query. Store the
-secret in that caller's secret configuration, not a committed URL or cron command.
-Use a 65-second caller timeout, avoid overlapping runs where practical, and retry
-non-2xx responses with bounded backoff. Each call drains up to 50; monitor summary
-counts and call again for a sustained backlog. The route allows 60 seconds; verify
-that the hosting plan supports that runtime. A scheduler that only sends GET
-requires a secure POST adapter; this endpoint intentionally does not enable GET
-mutation. No external scheduler or infrastructure is provisioned in this step.
+Vercel deployment uses GET /api/cron/reminders, a server-only adapter importing the
+same processor directly with the same constant-time bearer validation. vercel.json
+selects */5 * * * * (every five minutes). The existing POST endpoint remains the
+fallback for another trusted scheduled HTTP caller. Both routes reject query
+parameters, return only counts and use no-store. Each call drains up to 50 within
+the work budget; monitor failed counts/backlogs. Neither route accepts caller time
+or recipient input. No external infrastructure is provisioned by this repository.
+
+### Vercel deployment setup
+
+1. Import the Nexora Git repository into Vercel using the Next.js preset, repository
+   root, npm install and npm run build. Select the intended production branch and
+   HTTPS domain. Do not replace existing project settings with test-server values.
+2. In the project dashboard, Settings → Environment Variables, select Production.
+   Add DATABASE_URL (runtime pooled Neon URL), AUTH_SECRET, APP_URL and optionally
+   PUBLIC_APP_URL. Use your real HTTPS origin for APP_URL and PUBLIC_APP_URL, e.g.
+   https://nexora.example.com (example only). APP_URL remains Better Auth's origin;
+   PUBLIC_APP_URL controls absolute QR/calendar links and falls back to APP_URL.
+   Notification hrefs stay relative /events/[slug]. Store database/auth values as
+   Secrets. DIRECT_URL is only needed by tooling using prisma.config.ts, such as
+   db:status or migration deployment; runtime never uses it. No new migration is
+   required for this wiring. If your deployment tooling runs those commands, supply
+   DIRECT_URL there. Do not put credentials in NEXT_PUBLIC_ variables.
+3. Generate an independent production CRON_SECRET yourself on your Windows PC.
+   This PowerShell command works with Windows PowerShell 5.1 and PowerShell 7:
+
+   ```powershell
+   $reminderSecretBytes = New-Object byte[] 32
+   $reminderSecretRng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+   try {
+     $reminderSecretRng.GetBytes($reminderSecretBytes)
+     [BitConverter]::ToString($reminderSecretBytes).Replace('-', '').ToLowerInvariant()
+   } finally {
+     $reminderSecretRng.Dispose()
+     [Array]::Clear($reminderSecretBytes, 0, $reminderSecretBytes.Length)
+   }
+   ```
+
+   Paste the generated value into CRON_SECRET with Type=Secret (the former
+   Sensitive setting), target Production, and Save. Keep the value out of Git,
+   shared logs and screenshots. The app requires at least 32 characters; this
+   command generates 64 hex characters from 32 random bytes. No actual production
+   secret is generated or committed by this step. Vercel's current UI terminology
+   is documented in [environment variable types](https://vercel.com/docs/environment-variables/sensitive-environment-variables).
+4. Redeploy Production with these environment variables and vercel.json. Use
+   Settings → Cron Jobs to confirm /api/cron/reminders with */5 * * * * is enabled.
+   Vercel supplies the bearer header using CRON_SECRET. Cron registration belongs
+   to production deployment; local/preview HTTP tests do not prove registration.
+5. Use Cron Jobs → View Log to inspect invocation status and the four safe counts.
+   Confirm the next scheduled execution succeeds. Vercel does not automatically
+   retry failures; the next scheduled tick can retry an undelivered occurrence
+   while its event remains upcoming. These controls and authentication are covered
+   by [Vercel's cron documentation](https://vercel.com/docs/cron-jobs/manage-cron-jobs).
+6. For final deployed verification, use a disposable attendee/event/registration
+   with a due, enabled reminder. Wait for a real scheduled tick, check the reminder
+   in that attendee's inbox and unread count, then remove only those fixtures.
+   Never use existing business records as test data. Check QR/calendar links use
+   the HTTPS deployment domain and the notification links resolve to the event.
+
+The configured five-minute schedule requires a supported Vercel plan. Hobby allows
+only daily cron jobs and rejects more frequent schedules at deployment; Pro and
+Enterprise support minute-level schedules. Your actual project plan has not been
+inspected. Daily delivery is unacceptable for 15-minute reminders; do not downgrade
+the schedule or change reminder offsets. See [current Vercel cron limits](https://vercel.com/docs/cron-jobs/usage-and-pricing).
+Under normal execution, five-minute polling can deliver up to about five minutes
+after the requested reminder instant; platform delays or backlogs can add latency.
+Verify that your plan supports the 60-second function limit and monitor counts.
+
+For an external scheduled caller (such as an existing Render Cron or GitHub Actions
+workflow), the generic contract remains:
+
+```http
+POST https://nexora.example.com/api/internal/reminders/run
+Authorization: Bearer <CRON_SECRET>
+```
+
+The body is empty (Content-Length: 0 is valid); no query parameters. Store the token
+in the caller's secret configuration, call every five minutes or faster, and use
+a 65-second timeout plus bounded retries for non-2xx responses. No provider is
+provisioned. If using Vercel Hobby with an external caller, remove only the Vercel
+crons entry for that deployment to avoid its unsupported-cadence deployment error;
+preserve unrelated vercel.json settings and retain the five-minute external cadence.
 
 Run npm run test:reminders for isolated in-memory scheduler/security tests and
 node tests/reminder-scheduler-readonly.mjs for PostgreSQL-enforced read-only SQL,

@@ -7,9 +7,9 @@ export function authorizedReminderJob(header: string | null, secret: string | un
   const digest = (value: string) => createHash("sha256").update(value).digest();
   return timingSafeEqual(digest(header.slice(7)), digest(secret));
 }
-export async function handleReminderJob(request: Request, secret: string | undefined, run: () => Promise<ReminderRunResult>) {
+export async function handleReminderJob(request: Request, secret: string | undefined, run: () => Promise<ReminderRunResult>, method: "POST" | "GET" = "POST") {
   const headers = { "Cache-Control": "no-store" };
-  if (request.method !== "POST") return Response.json({ error: "Method not allowed" }, { status: 405, headers: { ...headers, Allow: "POST" } });
+  if (request.method !== method) return Response.json({ error: "Method not allowed" }, { status: 405, headers: { ...headers, Allow: method } });
   if (!secret || secret.length < 32 || secret.trim() !== secret) return Response.json({ error: "Scheduler unavailable" }, { status: 503, headers });
   if (!authorizedReminderJob(request.headers.get("authorization"), secret)) return Response.json({ error: "Unauthorized" }, { status: 401, headers });
   // No selectors, client clocks or batch overrides. Refuse targeting parameters.
@@ -32,9 +32,15 @@ export async function handleReminderJob(request: Request, secret: string | undef
   }
   try {
     const result = await run();
-    console.info("Reminder scheduler", result);
-    return Response.json(result, { status: result.failed ? 503 : 200, headers });
+    const summary = { processed: result.processed, delivered: result.delivered, skipped: result.skipped, failed: result.failed };
+    console.info("Reminder scheduler", summary);
+    return Response.json(summary, { status: summary.failed ? 503 : 200, headers });
   } catch {
     return Response.json({ error: "Scheduler unavailable" }, { status: 503, headers });
   }
+}
+
+/** Only the server's cron adapter opts into GET; POST stays the default. */
+export function handleReminderCron(request: Request, secret: string | undefined, run: () => Promise<ReminderRunResult>) {
+  return handleReminderJob(request, secret, run, "GET");
 }
