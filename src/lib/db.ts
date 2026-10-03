@@ -1,18 +1,31 @@
 import "server-only";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
 import { PrismaClient } from "@/generated/prisma/client";
 import { getDatabaseUrl } from "./env";
 
-const databaseGlobal = globalThis as unknown as { nexoraPrisma?: PrismaClient };
-let productionClient: PrismaClient | undefined;
+type DatabaseRuntime = { pool: Pool; adapter: PrismaPg; client: PrismaClient };
+const databaseGlobal = globalThis as unknown as { nexoraDatabaseRuntime?: DatabaseRuntime };
 /** Lazy initialization avoids opening database connections during module loading. */
 export function getDb(): PrismaClient {
-  const existing = process.env.NODE_ENV === "production" ? productionClient : databaseGlobal.nexoraPrisma;
-  if (existing) return existing;
-  const adapter = new PrismaPg({ connectionString: getDatabaseUrl(), max: 10, connectionTimeoutMillis: 5000, idleTimeoutMillis: 30000 });
+  if (databaseGlobal.nexoraDatabaseRuntime) return databaseGlobal.nexoraDatabaseRuntime.client;
+  const pool = new Pool({
+    connectionString: getDatabaseUrl(), // Runtime always uses DATABASE_URL, never DIRECT_URL.
+    max: 5, // Bound per-process connections and relation-query fan-out behind Neon's pooler.
+    connectionTimeoutMillis: 15_000, // Bounded wait for connection/checkout, including Neon wake-up + TLS.
+    idleTimeoutMillis: 30_000, // Release unused sockets; do not keep the compute awake indefinitely.
+    keepAlive: true, // TCP probes help detect broken connections on long-lived Node processes.
+  });
+  // pg discards failed idle connections itself. Keep their diagnostics server-side
+  // without logging the Pool/configuration, which contains database credentials.
+  pool.on("error", (error: Error) => console.error("Runtime database idle connection failed", { name: error.name, message: error.message }));
+  // Explicit shutdown ($disconnect in a CLI/test) also disposes the owned pool.
+  // Ordinary request handlers must never disconnect this process-wide stack.
+  const adapter = new PrismaPg(pool, { disposeExternalPool: true });
   // Disable query logging: auth queries may contain sensitive credential fields.
   const client = new PrismaClient({ adapter, log: [] });
-  if (process.env.NODE_ENV === "production") productionClient = client;
-  else databaseGlobal.nexoraPrisma = client;
+  // Store all ownership together, in every Node environment. Module reloads must
+  // not create a second adapter/pool alongside a surviving PrismaClient.
+  databaseGlobal.nexoraDatabaseRuntime = { pool, adapter, client };
   return client;
 }

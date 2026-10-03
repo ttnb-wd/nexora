@@ -45,6 +45,7 @@ model User {
   bookmarks     EventBookmark[]
   followedOrganizations OrganizationFollower[]
   notifications Notification[]
+  eventReminders EventReminderPreference[]
 }
 
 model Session {
@@ -167,6 +168,7 @@ model Event {
   agendaItems          EventAgendaItem[]
   speakers             EventSpeaker[]
   resources            EventResource[]
+  reminderPreferences  EventReminderPreference[]
 
   @@index([creatorId])
   @@index([organizationId, startAt])
@@ -283,12 +285,29 @@ model OrganizationFollower {
 }
 
 enum NotificationType {
+  EVENT_REMINDER
   EVENT_PUBLISHED
   EVENT_UPDATED
   EVENT_CANCELLED
   REGISTRATION_CONFIRMED
   REGISTRATION_CANCELLED
   SYSTEM
+}
+
+model EventReminderPreference {
+  id              String @id @default(cuid())
+  userId          String
+  eventId         String
+  reminderMinutes Int
+  enabled         Boolean @default(true)
+  createdAt       DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime @updatedAt @db.Timestamptz(3)
+  user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event           Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, eventId])
+  @@index([eventId, enabled])
+  @@index([enabled, eventId])
 }
 
 model Notification {

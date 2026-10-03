@@ -1,6 +1,8 @@
 import "server-only";
+import { cache } from "react";
 import { getDb } from "@/lib/db";
 import { mapPublicEvent, publicEventSelect, publicEventDetailSelect } from "./public-event-mapper";
+import { getCalendarLinks } from "../calendar/server";
 
 const discoveryLimit = 100;
 
@@ -20,10 +22,12 @@ export async function getCompletedPublishedEvents(limit = 20, now = new Date()) 
   return records.map((record) => mapPublicEvent(record, now));
 }
 
-export async function getPublishedEventBySlug(slug: string, now = new Date()) {
+// React memoizes only within the server render/request. A default Date is created
+// inside the cached function so metadata and page calls share the same slug key.
+export const getPublishedEventBySlug = cache(async (slug: string, now = new Date()) => {
   const record = await getDb().event.findFirst({ where: { slug, status: { in: ["PUBLISHED", "COMPLETED"] } }, select: publicEventDetailSelect });
-  return record ? mapPublicEvent(record, now) : null;
-}
+  return record ? { ...mapPublicEvent(record, now), calendar: getCalendarLinks(record) } : null;
+});
 
 /** No featured field exists yet, so the nearest upcoming published event is the pick. */
 export async function getFeaturedPublishedEvents(now = new Date()) {

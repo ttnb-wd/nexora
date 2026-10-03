@@ -21,6 +21,8 @@
     "test:events:content:runtime": "node tests/event-content-runtime.mjs",
     "test:attendees": "node --test tests/attendees.test.mjs",
     "test:attendees:runtime": "node tests/attendees-runtime.mjs",
+    "test:calendar": "node --test tests/calendar-reminders.test.mjs",
+    "test:calendar:runtime": "node tests/calendar-reminders-runtime.mjs",
     "test:events:runtime": "node tests/event-runtime.mjs",
     "test:events:public:runtime": "node tests/public-event-runtime.mjs",
     "test:events:public": "node --test tests/public-event-mapper.test.mjs",

@@ -114,7 +114,10 @@ export async function cancelEvent(eventId: string, scope: string | null, _previo
   try {
     count = await getDb().$transaction(async (tx) => {
       const updated = await tx.event.updateMany({ where: { id: event.id, status: "PUBLISHED", updatedAt: event.updatedAt, AND: [eventAccessWhere(user.id)] }, data: { status: "CANCELLED" } });
-      if (updated.count) await notifyEventCancelled(tx, event.id);
+      if (updated.count) {
+        await tx.eventReminderPreference.updateMany({ where: { eventId: event.id, enabled: true }, data: { enabled: false } });
+        await notifyEventCancelled(tx, event.id);
+      }
       return updated.count;
     }, { maxWait: 10000, timeout: 15000 });
   } catch { return { message: "We couldn’t cancel this event. Please try again shortly." }; }

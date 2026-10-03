@@ -32,6 +32,7 @@ export interface Event {
   source?: "database" | "fixture";
   startAt?: string;
   timezone?: string;
+  calendar?: { google: string; ics: string };
   type: EventType;
   description?: string;
   visual: { tone: EventVisual; headline: string; caption: string };

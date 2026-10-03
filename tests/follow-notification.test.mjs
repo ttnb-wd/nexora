@@ -87,10 +87,11 @@ test('mark validation/auth/failures expose only friendly results',async()=>{
  setup();globalThis.socialDb.notification.updateMany=async()=>{throw Error('Prisma SQL internal')};const result=await markRead('notice');assert.equal(result.ok,false);assert.ok(!result.message.includes('SQL'));
 });
 test('registration notification failure rolls back the mutation rather than reporting success',async()=>{
- const state=setup();let row=null;let lock=false;
+ const state=setup();let row=null;let lock=false;let notificationAttempted=false;
  const event={id:'event',title:'Real event',slug:'real-event',status:'PUBLISHED',startAt:new Date('2090-01-01'),endAt:new Date('2090-01-02'),capacity:null,registrationDeadline:null};
  Object.assign(state.tx,{$queryRaw:async()=>{lock=true},event:{findUnique:async()=>event},eventRegistration:{findUnique:async()=>row,count:async()=>0,upsert:async({create})=>{row=create;return row}}});
- state.tx.notification.create=async()=>{assert.ok(lock);throw Error('SQL notification unavailable')};
+ state.tx.eventReminderPreference={updateMany:async()=>({count:0})};
+ state.tx.notification.create=async()=>{assert.ok(lock);notificationAttempted=true;throw Error('SQL notification unavailable')};
  state.tx.$transaction=async(callback)=>{const before=row;try{return await callback(state.tx)}catch(error){row=before;throw error}};
- const result=await participation.mutateParticipation('real-event','join');assert.equal(result.ok,false);assert.equal(row,null);assert.ok(!result.message.includes('SQL'));
+ const result=await participation.mutateParticipation('real-event','join');assert.equal(result.ok,false);assert.equal(row,null);assert.equal(notificationAttempted,true);assert.ok(!result.message.includes('SQL'));
 });

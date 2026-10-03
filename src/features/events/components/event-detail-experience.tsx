@@ -20,10 +20,12 @@ import { joinEvent, cancelEventRegistration } from "@/features/participation/ser
 import { useEventBookmark } from "@/features/participation/components/bookmark-provider";
 import { eventSignInPath, type Availability, type ViewerParticipation } from "@/features/participation/rules";
 import styles from "./event-detail.module.css";
+import { CalendarControl, ReminderControl } from "../calendar/calendar-controls";
+import type { ReminderState } from "../reminders/schemas";
 function DetailSection({ title, index, children }: { title: string; index: number; children: ReactNode }) {
   return <section id={title.toLowerCase()} aria-labelledby={`${title.toLowerCase()}-title`} className={styles.section}><FadeUp distance={14} duration={.45}><header className={styles.sectionHeading}><span aria-hidden="true">{String(index).padStart(2, "0")}</span><h2 id={`${title.toLowerCase()}-title`}>{title}</h2></header>{children}</FadeUp></section>;
 }
-export function EventDetailExperience({ event, related, participation }: { event: Event; related: Event[]; participation: { viewer: ViewerParticipation; availability: Availability } }) {
+export function EventDetailExperience({ event, related, participation, reminder }: { event: Event; related: Event[]; participation: { viewer: ViewerParticipation; availability: Availability }; reminder: ReminderState }) {
   const joined = participation.viewer.joined;
   const attended = participation.viewer.attended;
   const bookmark = useEventBookmark(event.slug);
@@ -58,7 +60,8 @@ export function EventDetailExperience({ event, related, participation }: { event
         <DetailSection title="Venue" index={sections.indexOf("Venue") + 1}><EventVenue event={event} /></DetailSection>
         <DetailSection title="Organizer" index={sections.indexOf("Organizer") + 1}><EventOrganizer event={event} /></DetailSection>
         {showResources && <DetailSection title="Resources" index={sections.indexOf("Resources") + 1}><EventResources event={event} /></DetailSection>}
-      </div><EventRegistrationPanel {...interactions} /></div>
+        {event.calendar && (!joined || event.status === "completed" || reminder.eligible) && <div className={styles.mobileCalendar}>{(!joined || event.status === "completed") && <CalendarControl links={event.calendar} title={event.title} />}<ReminderControl slug={event.slug} state={reminder} /></div>}
+      </div><EventRegistrationPanel {...interactions} reminder={reminder} /></div>
       {related.length > 0 && <section aria-labelledby="related-title" className={styles.related}><FadeUp><header className={styles.relatedHeader}><div><p className={styles.eyebrow}>KEEP THE CURIOSITY GOING</p><h2 id="related-title">More in your orbit<span>.</span></h2></div><Link href="/explore">Explore all events <ArrowUpRight size={17} aria-hidden="true" /></Link></header></FadeUp><div className={styles.relatedGrid}>{related.map((candidate, index) => <FadeUp key={candidate.id} delay={index * .06}><EventCard event={candidate} /></FadeUp>)}</div></section>}
     </Container>
     <div className={styles.mobileJoin}><div><strong>{attended ? "Attended" : event.status === "completed" ? "Completed event" : joined ? "Joined" : "Your next moment"}</strong><small>{attended ? "You attended this event" : event.status === "completed" ? "This event has ended" : participation.availability.closedReason ?? (joined ? "Your registration is saved to your account" : "Join or save this event")}</small></div><EventActionButtons {...interactions} hideCancel /></div>

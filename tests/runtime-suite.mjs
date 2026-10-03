@@ -6,7 +6,7 @@ import nextEnv from '@next/env';
 import { PrismaPg } from '@prisma/adapter-pg';
 const { PrismaClient } = await import('../src/generated/prisma/client.ts');
 nextEnv.loadEnvConfig(process.cwd());
-assert.ok(process.env.STEP14_DISPOSABLE_APPROVED==='1'||process.env.STEP15_DISPOSABLE_APPROVED==='1','Disposable runtime approval required.');
+assert.ok(process.env.STEP14_DISPOSABLE_APPROVED==='1'||process.env.STEP15_DISPOSABLE_APPROVED==='1'||process.env.STEP16_DISPOSABLE_APPROVED==='1','Disposable runtime approval required.');
 const suites=['organization-runtime.mjs','event-runtime.mjs','public-event-runtime.mjs','public-organization-runtime.mjs','public-organization-readonly.mjs','participation-runtime.mjs','participation-readonly.mjs','follow-notification-runtime.mjs'];
 const suite=process.argv[2];assert.ok(suites.includes(suite));
 const run=randomUUID().replaceAll('-','');

@@ -8,7 +8,9 @@ import type { PublicEvent } from "@/features/events/types";
 import { buttonStyles } from "@/components/ui/button";
 import styles from "@/features/events/components/event-management.module.css";
 import { registrationStatusLabels } from "@/features/attendees/schemas";
-type Row = { event: PublicEvent; registrationStatus?: string; eventStatus: string; publicVisible: boolean };
+import { CalendarControl } from "@/features/events/calendar/calendar-controls";
+import { reminderLabels, type ReminderState } from "@/features/events/reminders/schemas";
+type Row = { event: PublicEvent; registrationStatus?: string; eventStatus: string; publicVisible: boolean; reminder?: ReminderState };
 function PersonalEvent({ row, saved }: { row: Row; saved: boolean }) {
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState("");
@@ -23,10 +25,12 @@ function PersonalEvent({ row, saved }: { row: Row; saved: boolean }) {
       } catch { setMessage("We could not update this event. Please try again."); }
     });
   }
-  return <section className={styles.card} aria-label={row.event.title}>
+  return <section className={`${styles.card} ${styles.personalCard}`} aria-label={row.event.title}>
     {row.publicVisible ? <EventCard event={row.event} variant="compact" /> : <><h2>{row.event.title}</h2><p>{row.event.date} · {row.event.time}</p><p>{row.event.organizer.name} · {row.event.location.city} · {row.event.type}</p></>}
     <p>{row.eventStatus === "CANCELLED" ? "Event cancelled by the organizer" : row.eventStatus === "ARCHIVED" ? "Event archived" : row.eventStatus === "DRAFT" ? "Event no longer publicly available" : row.event.status === "completed" ? "Event completed" : "Upcoming event"}</p>
     {!saved && <p>Registration: {registrationStatusLabels[row.registrationStatus as keyof typeof registrationStatusLabels] ?? row.registrationStatus}</p>}
+    {!saved && active && row.event.calendar && <CalendarControl links={row.event.calendar} title={row.event.title} />}
+    {!saved && row.reminder?.eligible && <p>Reminder preference: {row.reminder.enabled ? reminderLabels[row.reminder.reminderMinutes as keyof typeof reminderLabels] : "Off"} · <Link href={`/events/${row.event.slug}`}>Change reminder</Link></p>}
     {(saved || active) && <button type="button" className={buttonStyles({ variant: "secondary" })} disabled={pending} onClick={remove}>{saved ? "Unsave" : "Cancel registration"}</button>}
     {message && <p role="status">{message}</p>}
   </section>;

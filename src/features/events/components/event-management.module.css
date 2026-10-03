@@ -51,6 +51,8 @@
 .overview aside { display: grid; gap: 1rem; }
 .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 1.5rem; }
 .grid h2 { font-size: 1.2rem; }
+.personalCard { min-width: 0; }
+.personalCard > article { height: auto; }
 .contentSections { display: grid; gap: 1.5rem; margin-top: 1.5rem; }
 .contentList { padding: 0; list-style: none; }
 .contentItem { padding-block: 1.25rem; border-bottom: 1px solid var(--border); }

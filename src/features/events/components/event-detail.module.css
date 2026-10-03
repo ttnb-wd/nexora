@@ -104,6 +104,8 @@
 .relatedGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.2rem; }
 .relatedGrid > div { height: 100%; }
 .mobileJoin { display: none; }
+.mobileCalendar { display: none; }
+@media (max-width: 767px) { .mobileCalendar { display: block; margin-bottom: 2rem; padding: 1rem; border: 1px solid #d3e5e0; border-radius: .8rem; } }
 .notFound { min-height: 70vh; padding-block: 5rem; background: radial-gradient(ellipse at 50% 0%, #e4f2eb, transparent 70%); text-align: center; }
 .notFoundMark { display: grid; place-items: center; width: 5rem; height: 5rem; background: #e0eeea; color: #4b8184; border-radius: 1.4rem; margin: 0 auto 2rem; transform: rotate(-7deg); }
 .notFound h1 { font-size: clamp(2.5rem, 5vw, 4rem); font-weight: 700; letter-spacing: -.06em; }

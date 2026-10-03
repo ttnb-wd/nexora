@@ -1,0 +1,9 @@
+.calendar { margin-top: 1rem; font-size: .85rem; }
+.calendar summary { cursor: pointer; padding: .55rem .25rem; color: #285d66; font-weight: 600; }
+.options { display: flex; flex-direction: column; gap: .4rem; padding: .6rem; border: 1px solid #d3e5e0; border-radius: .6rem; background: white; }
+.options a { padding: .5rem; text-decoration: underline; color: #285d66; }
+.reminder { display: grid; gap: .45rem; margin-top: 1rem; font-size: .85rem; }
+.reminder label { font-weight: 600; }
+.reminder select { max-width: 100%; min-height: 2.75rem; border: 1px solid #98b6b0; border-radius: .5rem; padding: .6rem; background: white; color: #294952; }
+.note { font-size: .75rem; line-height: 1.6; color: #53676e; }
+.calendar summary:focus-visible, .options a:focus-visible, .reminder select:focus-visible { outline: 3px solid #247d86; outline-offset: 3px; }

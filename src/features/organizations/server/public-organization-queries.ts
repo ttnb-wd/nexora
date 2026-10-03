@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { getDb } from "@/lib/db";
 import { mapPublicEvent, publicEventSelect } from "@/features/events/server/public-event-mapper";
 import { mapPublicOrganization, publicOrganizationSelect } from "./public-organization-mapper";
@@ -8,10 +9,11 @@ export async function getPublicOrganizations() {
   const records = await getDb().organization.findMany({ select: publicOrganizationSelect, orderBy: [{ name: "asc" }, { slug: "asc" }] });
   return records.map(mapPublicOrganization);
 }
-export async function getPublicOrganizationBySlug(slug: string) {
+// Share metadata/page reads within one render, without caching across requests.
+export const getPublicOrganizationBySlug = cache(async (slug: string) => {
   const record = await getDb().organization.findUnique({ where: { slug }, select: publicOrganizationSelect });
   return record ? mapPublicOrganization(record) : null;
-}
+});
 export async function getOrganizationUpcomingEvents(slug: string, now = new Date()) {
   const records = await getDb().event.findMany({ where: { organization: { slug }, status: "PUBLISHED", startAt: { gte: now } }, select: publicEventSelect, orderBy: [{ startAt: "asc" }, { slug: "asc" }] });
   return records.map((record) => mapPublicEvent(record, now));

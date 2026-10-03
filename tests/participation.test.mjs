@@ -18,6 +18,7 @@ function setup(overrides={}) {
  let release=Promise.resolve();
  const key=(where)=>`${where.userId}:${where.eventId}`;
  const tx={
+  eventReminderPreference:{updateMany:async()=>({count:0})},
   notification:{create:async({data})=>data},
   $queryRaw:async(strings,...values)=>{calls.push({sql:strings.join('?'),values})},
   event:{findUnique:async()=>event},

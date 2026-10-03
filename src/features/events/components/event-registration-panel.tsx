@@ -4,7 +4,9 @@ import { CalendarDays, Clock3, MapPin, Radio, Check } from "lucide-react";
 import { EventActionButtons, type EventInteractionProps } from "./event-action-buttons";
 import { formatEventDate } from "../event-helpers";
 import styles from "./event-detail.module.css";
-export function EventRegistrationPanel(props: EventInteractionProps) {
+import { CalendarControl, ReminderControl } from "../calendar/calendar-controls";
+import type { ReminderState } from "../reminders/schemas";
+export function EventRegistrationPanel(props: EventInteractionProps & { reminder: ReminderState }) {
   const { event, joined, attended, availability, message } = props;
   const reduced = useReducedMotion();
   return <aside className={styles.registration} aria-labelledby="registration-title"><motion.div className={styles.registrationCard} whileHover={reduced === false ? { y: -2 } : undefined} transition={{ duration: .2 }}>
@@ -17,5 +19,7 @@ export function EventRegistrationPanel(props: EventInteractionProps) {
     </dl>
     <p className={styles.availability}><Check size={15} aria-hidden="true" />{attended ? "You attended this event" : joined ? `You are registered${availability.spotsLeft === null ? "" : ` · ${availability.spotsLeft} spots left`}` : availability.closedReason ?? (availability.spotsLeft === null ? "Registration open" : `${availability.spotsLeft} spots left`)}</p>
     <EventActionButtons {...props} /><p className={styles.panelNote}>{message || "Manage your registration and saved events in your dashboard."}</p>
+    {event.calendar && (!joined || event.status === "completed") && <CalendarControl links={event.calendar} title={event.title} />}
+    <ReminderControl slug={event.slug} state={props.reminder} />
   </motion.div><p className={styles.panelCaption}>Great things happen when we show up.</p></aside>;
 }

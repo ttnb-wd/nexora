@@ -6,6 +6,7 @@ import { mapPublicEvent, publicEventSelect } from "@/features/events/server/publ
 import { participationSlugSchema, eventSignInPath, registrationClosedReason, occupiedRegistrationStatuses, type ParticipationResult, type Availability } from "../rules";
 
 import { notifyRegistration } from "@/features/notifications/server/creation";
+import { getCalendarLinks } from "@/features/events/calendar/server";
 
 const eligibilitySelect = { id: true, title: true, slug: true, status: true, startAt: true, endAt: true, capacity: true, registrationDeadline: true } as const;
 /** No client identity is accepted: every read/write derives identity from the session. */
@@ -32,6 +33,7 @@ export async function mutateParticipation(input: unknown, kind: "join" | "cancel
         if (registration?.status === "ATTENDED") return { ok: false, message: "Attended registrations cannot be cancelled." };
         // Own rows only; cancellation remains possible when the organizer cancels/archives.
         const cancelled = await tx.eventRegistration.updateMany({ where: { userId: user.id, eventId: event.id, status: "REGISTERED" }, data: { status: "CANCELLED" } });
+        await tx.eventReminderPreference.updateMany({ where: { userId: user.id, eventId: event.id, enabled: true }, data: { enabled: false } });
         if (cancelled.count) await notifyRegistration(tx, event, user.id, false);
         return { ok: true, message: "Registration cancelled." };
       }
@@ -48,6 +50,8 @@ export async function mutateParticipation(input: unknown, kind: "join" | "cancel
       const count = await tx.eventRegistration.count({ where: { eventId: event.id, status: { in: [...occupiedRegistrationStatuses] } } });
       if (event.capacity !== null && count >= event.capacity) return { ok: false, message: "This event is full." };
       await tx.eventRegistration.upsert({ where, create: { userId: user.id, eventId: event.id, status: "REGISTERED" }, update: { status: "REGISTERED", checkedInAt: null, checkedInById: null } });
+      // Rejoin starts with reminders off; duplicate joins above preserve an active preference.
+      await tx.eventReminderPreference.updateMany({ where: { userId: user.id, eventId: event.id, enabled: true }, data: { enabled: false } });
       await notifyRegistration(tx, event, user.id, true);
       return { ok: true, message: "You are registered for this event." };
     }, { isolationLevel: "ReadCommitted", maxWait: 10000, timeout: 15000 });
@@ -87,8 +91,13 @@ export async function getEventRegistrationCount(eventId: string, scope: string |
 export async function getJoinedEvents() {
   const user = await requireUser();
   const now = new Date();
-  const records = await getDb().eventRegistration.findMany({ where: { userId: user.id }, select: { status: true, event: { select: { ...publicEventSelect, status: true } } }, orderBy: { event: { startAt: "asc" } } });
-  return records.map(({ status, event }) => ({ event: mapPublicEvent(event, now), registrationStatus: status, eventStatus: event.status, publicVisible: ["PUBLISHED", "COMPLETED"].includes(event.status) }));
+  const records = await getDb().eventRegistration.findMany({ where: { userId: user.id }, select: { status: true, event: { select: { ...publicEventSelect, status: true, reminderPreferences: { where: { userId: user.id }, select: { enabled: true, reminderMinutes: true } } } } }, orderBy: { event: { startAt: "asc" } } });
+  return records.map(({ status, event }) => {
+    const eligible = status === "REGISTERED" && event.status === "PUBLISHED" && event.startAt > now;
+    const preference = event.reminderPreferences[0];
+    return { event: { ...mapPublicEvent(event, now), ...(eligible ? { calendar: getCalendarLinks(event) } : {}) }, registrationStatus: status, eventStatus: event.status, publicVisible: ["PUBLISHED", "COMPLETED"].includes(event.status),
+      reminder: { eligible, enabled: eligible && Boolean(preference?.enabled), reminderMinutes: eligible && preference?.enabled ? preference.reminderMinutes : null } };
+  });
 }
 export async function getSavedEvents() {
   const user = await requireUser();

@@ -4,6 +4,7 @@ import { getPublishedEventBySlug, getRelatedPublishedEvents } from "@/features/e
 import { EventDetailExperience } from "@/features/events/components/event-detail-experience";
 
 import { getEventParticipation } from "@/features/participation/server/service";
+import { getViewerEventReminder } from "@/features/events/reminders/actions";
 
 type Props = { params: Promise<{ slug: string }> };
 export const dynamic = "force-dynamic";
@@ -29,5 +30,6 @@ export default async function EventDetailPage({ params }: Props) {
   let participation;
   try { participation = await getEventParticipation(slug); }
   catch { throw new Error("Event registration temporarily unavailable"); }
-  return <EventDetailExperience key={event.id} event={event} related={related} participation={participation} />;
+  const reminder = await getViewerEventReminder(slug);
+  return <EventDetailExperience key={event.id} event={event} related={related} participation={participation} reminder={reminder} />;
 }
