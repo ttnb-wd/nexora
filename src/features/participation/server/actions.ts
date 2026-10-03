@@ -11,6 +11,8 @@ async function mutate(slug: string, kind: "join" | "cancel" | "save" | "unsave")
     revalidatePath("/dashboard/saved");
     revalidatePath("/organizer/[organizationSlug]/events/[eventId]", "page");
     revalidatePath("/dashboard/events/[eventId]", "page");
+    revalidatePath("/organizer/[organizationSlug]/events/[eventId]/attendees", "page");
+    revalidatePath("/dashboard/events/[eventId]/attendees", "page");
   }
   return result;
 }

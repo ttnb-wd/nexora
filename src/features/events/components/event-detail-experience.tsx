@@ -25,6 +25,7 @@ function DetailSection({ title, index, children }: { title: string; index: numbe
 }
 export function EventDetailExperience({ event, related, participation }: { event: Event; related: Event[]; participation: { viewer: ViewerParticipation; availability: Availability } }) {
   const joined = participation.viewer.joined;
+  const attended = participation.viewer.attended;
   const bookmark = useEventBookmark(event.slug);
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState("");
@@ -43,7 +44,7 @@ export function EventDetailExperience({ event, related, participation }: { event
   const page = useRef<HTMLElement>(null);
   const reduced = useReducedMotion();
   const { scrollYProgress } = useScroll({ target: page, offset: ["start start", "end end"] });
-  const interactions = { event, joined, saved: bookmark.saved, pending: pending || bookmark.pending, message: message || bookmark.message, availability: participation.availability, onJoin: () => changeRegistration(false), onCancel: () => changeRegistration(true), onSave: bookmark.toggle };
+  const interactions = { event, joined, attended, saved: bookmark.saved, pending: pending || bookmark.pending, message: message || bookmark.message, availability: participation.availability, onJoin: () => changeRegistration(false), onCancel: () => changeRegistration(true), onSave: bookmark.toggle };
   const showResources = event.source !== "database" || event.details.resources.length > 0 || event.status === "completed";
   const sections = ["About", ...(event.details.agenda.length ? ["Agenda"] : []), ...(event.details.speakers.length ? ["Speakers"] : []), "Venue", "Organizer", ...(showResources ? ["Resources"] : [])];
   return <main id="main-content" tabIndex={-1} ref={page} className={styles.page} data-event-detail>
@@ -60,6 +61,6 @@ export function EventDetailExperience({ event, related, participation }: { event
       </div><EventRegistrationPanel {...interactions} /></div>
       {related.length > 0 && <section aria-labelledby="related-title" className={styles.related}><FadeUp><header className={styles.relatedHeader}><div><p className={styles.eyebrow}>KEEP THE CURIOSITY GOING</p><h2 id="related-title">More in your orbit<span>.</span></h2></div><Link href="/explore">Explore all events <ArrowUpRight size={17} aria-hidden="true" /></Link></header></FadeUp><div className={styles.relatedGrid}>{related.map((candidate, index) => <FadeUp key={candidate.id} delay={index * .06}><EventCard event={candidate} /></FadeUp>)}</div></section>}
     </Container>
-    <div className={styles.mobileJoin}><div><strong>{event.status === "completed" ? "Completed event" : joined ? "Joined" : "Your next moment"}</strong><small>{event.status === "completed" ? "This event has ended" : participation.availability.closedReason ?? (joined ? "Your registration is saved to your account" : "Join or save this event")}</small></div><EventActionButtons {...interactions} hideCancel /></div>
+    <div className={styles.mobileJoin}><div><strong>{attended ? "Attended" : event.status === "completed" ? "Completed event" : joined ? "Joined" : "Your next moment"}</strong><small>{attended ? "You attended this event" : event.status === "completed" ? "This event has ended" : participation.availability.closedReason ?? (joined ? "Your registration is saved to your account" : "Join or save this event")}</small></div><EventActionButtons {...interactions} hideCancel /></div>
   </main>;
 }

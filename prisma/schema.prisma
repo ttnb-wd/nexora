@@ -40,7 +40,8 @@ model User {
   accounts      Account[]
   memberships   OrganizationMember[]
   createdEvents Event[]
-  registrations EventRegistration[]
+  registrations EventRegistration[] @relation("EventAttendee")
+  checkedInRegistrations EventRegistration[] @relation("EventCheckInActor")
   bookmarks     EventBookmark[]
   followedOrganizations OrganizationFollower[]
   notifications Notification[]
@@ -243,12 +244,16 @@ model EventRegistration {
   status    RegistrationStatus @default(REGISTERED)
   createdAt DateTime           @default(now()) @db.Timestamptz(3)
   updatedAt DateTime           @updatedAt @db.Timestamptz(3)
-  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  checkedInAt DateTime?        @db.Timestamptz(3)
+  checkedInById String?
+  user      User               @relation("EventAttendee", fields: [userId], references: [id], onDelete: Cascade)
+  checkedInBy User?            @relation("EventCheckInActor", fields: [checkedInById], references: [id], onDelete: SetNull)
   event     Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@unique([userId, eventId])
   @@index([eventId, status])
   @@index([userId, status])
+  @@index([checkedInById])
 }
 
 model EventBookmark {

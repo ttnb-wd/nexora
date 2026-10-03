@@ -3,7 +3,7 @@ import { getDb } from "@/lib/db";
 import { getCurrentUser, requireUser } from "@/features/auth/server/session";
 import { requireEventAccess } from "@/features/events/server/authorization";
 import { mapPublicEvent, publicEventSelect } from "@/features/events/server/public-event-mapper";
-import { participationSlugSchema, eventSignInPath, registrationClosedReason, type ParticipationResult, type Availability } from "../rules";
+import { participationSlugSchema, eventSignInPath, registrationClosedReason, occupiedRegistrationStatuses, type ParticipationResult, type Availability } from "../rules";
 
 import { notifyRegistration } from "@/features/notifications/server/creation";
 
@@ -28,6 +28,8 @@ export async function mutateParticipation(input: unknown, kind: "join" | "cancel
         return { ok: true, message: "Event removed from saved events." };
       }
       if (kind === "cancel") {
+        const registration = await tx.eventRegistration.findUnique({ where, select: { status: true } });
+        if (registration?.status === "ATTENDED") return { ok: false, message: "Attended registrations cannot be cancelled." };
         // Own rows only; cancellation remains possible when the organizer cancels/archives.
         const cancelled = await tx.eventRegistration.updateMany({ where: { userId: user.id, eventId: event.id, status: "REGISTERED" }, data: { status: "CANCELLED" } });
         if (cancelled.count) await notifyRegistration(tx, event, user.id, false);
@@ -43,9 +45,9 @@ export async function mutateParticipation(input: unknown, kind: "join" | "cancel
       const existing = await tx.eventRegistration.findUnique({ where, select: { status: true } });
       if (existing?.status === "REGISTERED") return { ok: true, message: "You are already registered for this event." };
       if (existing && existing.status !== "CANCELLED") return { ok: false, message: "This registration cannot be changed." };
-      const count = await tx.eventRegistration.count({ where: { eventId: event.id, status: "REGISTERED" } });
+      const count = await tx.eventRegistration.count({ where: { eventId: event.id, status: { in: [...occupiedRegistrationStatuses] } } });
       if (event.capacity !== null && count >= event.capacity) return { ok: false, message: "This event is full." };
-      await tx.eventRegistration.upsert({ where, create: { userId: user.id, eventId: event.id, status: "REGISTERED" }, update: { status: "REGISTERED" } });
+      await tx.eventRegistration.upsert({ where, create: { userId: user.id, eventId: event.id, status: "REGISTERED" }, update: { status: "REGISTERED", checkedInAt: null, checkedInById: null } });
       await notifyRegistration(tx, event, user.id, true);
       return { ok: true, message: "You are registered for this event." };
     }, { isolationLevel: "ReadCommitted", maxWait: 10000, timeout: 15000 });
@@ -70,12 +72,12 @@ export async function getBookmarkViewer() {
 }
 export async function getEventParticipation(slug: string) {
   const user = await getCurrentUser();
-  const event = await getDb().event.findFirst({ where: { slug, status: { in: ["PUBLISHED", "COMPLETED"] } }, select: { ...eligibilitySelect, _count: { select: { registrations: { where: { status: "REGISTERED" } } } } } });
+  const event = await getDb().event.findFirst({ where: { slug, status: { in: ["PUBLISHED", "COMPLETED"] } }, select: { ...eligibilitySelect, _count: { select: { registrations: { where: { status: { in: [...occupiedRegistrationStatuses] } } } } } } });
   if (!event) throw new Error("Event unavailable");
   const [registration, saved] = await Promise.all([getRegistrationForUser(slug), isEventSavedByUser(slug)]);
   const spotsLeft = event.capacity === null ? null : Math.max(0, event.capacity - event._count.registrations);
   const availability: Availability = { closedReason: registrationClosedReason(event) ?? (spotsLeft === 0 ? "This event is full." : null), spotsLeft };
-  return { viewer: { authenticated: Boolean(user), joined: registration === "REGISTERED", saved }, availability };
+  return { viewer: { authenticated: Boolean(user), joined: registration === "REGISTERED", attended: registration === "ATTENDED", saved }, availability };
 }
 export async function getEventRegistrationCount(eventId: string, scope: string | null) {
   const { event } = await requireEventAccess(eventId, scope, false);

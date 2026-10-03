@@ -2,7 +2,9 @@ import { eventSlugSchema } from "@/features/events/management-schemas";
 export const participationSlugSchema = eventSlugSchema;
 export type ParticipationResult = { ok: boolean; message: string; signIn?: string };
 export type Availability = { closedReason: string | null; spotsLeft: number | null };
-export type ViewerParticipation = { authenticated: boolean; joined: boolean; saved: boolean };
+export type ViewerParticipation = { authenticated: boolean; joined: boolean; attended: boolean; saved: boolean };
+// Check-in records continue occupying their registered seat.
+export const occupiedRegistrationStatuses = ["REGISTERED", "ATTENDED"] as const;
 export function eventReturnPath(value: unknown) {
   return typeof value === "string" && /^\/events\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value) && value.length <= 108 ? value : "/dashboard";
 }

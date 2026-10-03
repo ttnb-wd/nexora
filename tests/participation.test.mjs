@@ -23,7 +23,7 @@ function setup(overrides={}) {
   event:{findUnique:async()=>event},
   eventRegistration:{
    findUnique:async({where})=>registrations.get(key(where.userId_eventId))??null,
-   count:async({where})=>[...registrations.values()].filter(r=>r.eventId===where.eventId&&r.status===where.status).length,
+   count:async({where})=>[...registrations.values()].filter(r=>r.eventId===where.eventId&&(typeof where.status==='string'?r.status===where.status:where.status.in.includes(r.status))).length,
    upsert:async({where,create,update})=>{const k=key(where.userId_eventId);const row=registrations.has(k)?{...registrations.get(k),...update}:create;registrations.set(k,row);return row},
    updateMany:async({where,data})=>{const k=key(where);const row=registrations.get(k);if(row&&row.status===where.status){registrations.set(k,{...row,...data});return {count:1}}return {count:0}},
   },
@@ -98,10 +98,29 @@ test('all personal queries constrain the session user, select status/event-only 
 });
 test('event detail exposes only viewer booleans and aggregate availability, with no participation record IDs',async()=>{
  const state=setup({capacity:12});
- globalThis.participationDb.event.findFirst=async(args)=>{assert.deepEqual(args.where,{slug:'real-event',status:{in:['PUBLISHED','COMPLETED']}});assert.deepEqual(args.select._count.select.registrations.where,{status:'REGISTERED'});return {...state.event,_count:{registrations:5}}};
+ globalThis.participationDb.event.findFirst=async(args)=>{assert.deepEqual(args.where,{slug:'real-event',status:{in:['PUBLISHED','COMPLETED']}});assert.deepEqual(args.select._count.select.registrations.where,{status:{in:['REGISTERED','ATTENDED']}});return {...state.event,_count:{registrations:5}}};
  globalThis.participationDb.eventRegistration.findFirst=async(args)=>{assert.equal(args.where.userId,'alice');assert.deepEqual(args.select,{status:true});return {status:'REGISTERED'}};
  globalThis.participationDb.eventBookmark.findFirst=async(args)=>{assert.equal(args.where.userId,'alice');assert.deepEqual(args.select,{createdAt:true});return {createdAt:new Date()}};
  const detail=await service.getEventParticipation('real-event');
- assert.deepEqual(detail,{viewer:{authenticated:true,joined:true,saved:true},availability:{closedReason:null,spotsLeft:7}});
+ assert.deepEqual(detail,{viewer:{authenticated:true,joined:true,attended:false,saved:true},availability:{closedReason:null,spotsLeft:7}});
  assert.ok(!JSON.stringify(detail).includes('alice')&&!JSON.stringify(detail).includes('event-internal'));
+});
+test('attended registrations keep capacity occupied and cannot be rejoined or cancelled by the attendee',async()=>{
+ const state=setup();
+ state.registrations.set('alice:event-internal',{userId:'alice',eventId:state.event.id,status:'ATTENDED',checkedInAt:new Date('2026-10-03'),checkedInById:'organizer'});
+ assert.equal((await service.mutateParticipation('real-event','join')).ok,false);
+ assert.equal((await service.mutateParticipation('real-event','cancel')).ok,false);
+ globalThis.participationUser={id:'bob'};
+ assert.equal((await service.mutateParticipation('real-event','join')).message,'This event is full.');
+ assert.equal(state.registrations.get('alice:event-internal').status,'ATTENDED');
+});
+test('personalized attended state is private to the viewer and has no audit or attendee identity fields',async()=>{
+ const state=setup({capacity:1});
+ globalThis.participationDb.event.findFirst=async()=>({...state.event,_count:{registrations:1}});
+ globalThis.participationDb.eventRegistration.findFirst=async()=>({status:'ATTENDED'});
+ globalThis.participationDb.eventBookmark.findFirst=async()=>null;
+ const detail=await service.getEventParticipation('real-event');
+ assert.deepEqual(detail.viewer,{authenticated:true,joined:false,attended:true,saved:false});
+ assert.equal(detail.availability.spotsLeft,0);
+ for(const secret of ['checkedInAt','checkedInById','userId','email','alice']) assert.ok(!JSON.stringify(detail).includes(secret));
 });
