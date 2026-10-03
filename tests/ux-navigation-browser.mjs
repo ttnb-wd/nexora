@@ -5,7 +5,7 @@ const targets = await (await fetch('http://127.0.0.1:9333/json/list')).json();
 const socket = new WebSocket(targets.find(t => t.type === 'page').webSocketDebuggerUrl);
 await new Promise((resolve,reject) => { socket.onopen = resolve; socket.onerror = reject; });
 let id = 0; const pending = new Map();
-socket.onmessage = e => { const message = JSON.parse(e.data); if (message.id) { const task = pending.get(message.id); pending.delete(message.id); message.error ? task.reject(new Error(message.error.message)) : task.resolve(message.result); } };
+socket.onmessage = e => { const message = JSON.parse(e.data); if (message.id) { const task = pending.get(message.id); pending.delete(message.id); if (message.error) task.reject(new Error(message.error.message)); else task.resolve(message.result); } };
 function send(method,params={}) { return new Promise((resolve,reject) => { const key=++id; pending.set(key,{resolve,reject}); socket.send(JSON.stringify({id:key,method,params})); }); }
 async function evaluate(expression) { const r=await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true}); if(r.exceptionDetails) throw new Error(r.exceptionDetails.text); return r.result.value; }
 async function until(expression) { const deadline=Date.now()+20000; while(Date.now()<deadline) { try { if(await evaluate(expression)) return; } catch {} await new Promise(r=>setTimeout(r,100)); } throw new Error(`Timed out: ${expression}`); }

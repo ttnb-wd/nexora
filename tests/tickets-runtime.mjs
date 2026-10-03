@@ -80,7 +80,7 @@ try {
   assert.ok(!(await scan(event,ticket.token,owner,`${prefix}-other`)).ok);
   pass('8–9 MEMBER, unrelated organizer, anonymous caller and forged organization scope cannot scan');
   const wrong=await scan(other,ticket.token,owner);assert.equal(wrong.message,'This ticket is for a different event.');assert.ok(!wrong.name);
-  for(const token of [newTicket(process.env.AUTH_SECRET).token,'forged',`${origin.replace('localhost','attacker.example')}/check-in/ticket#${ticket.token}`]) {const result=await scan(event,token,owner);assert.ok(!result.ok&&!result.name);}
+  for(const token of [newTicket(process.env.AUTH_SECRET).token,'forged',ticketUrl(ticket.token,'https://attacker.example')]) {const result=await scan(event,token,owner);assert.ok(!result.ok&&!result.name);}
   pass('7,10 wrong-event and forged/unknown/foreign-origin credentials rejected without attendee identity');
   const payload=ticketUrl(ticket.token,origin);
   for(const secret of [attendee.email,attendee.id,row.id,orgSlug,'OWNER']) assert.ok(!payload.includes(secret));

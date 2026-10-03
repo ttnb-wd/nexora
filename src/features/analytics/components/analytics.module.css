@@ -1,0 +1,30 @@
+ .page { padding-block: clamp(2rem,5vw,4rem); min-height: 65vh; }
+.header { margin-bottom: 1.5rem; }
+.eyebrow { color: var(--primary); font-size: .7rem; font-weight: 700; letter-spacing: .12em; margin-bottom: .6rem; }
+.page h1 { font-size: clamp(2rem,4vw,3.5rem); letter-spacing: -.045em; line-height: 1.12; overflow-wrap: anywhere; }
+.page h2 { font-size: 1.3rem; font-weight: 650; margin-bottom: .8rem; }
+.page p { color: var(--text-muted); line-height: 1.7; }
+.navigation, .ranges { display: flex; flex-wrap: wrap; gap: .75rem 1.25rem; margin-block: 1rem; }
+.navigation a, .ranges a { display: inline-flex; align-items: center; min-height: 2.75rem; color: var(--primary); }
+.ranges a { border: 1px solid var(--border); padding: .5rem .9rem; border-radius: var(--radius-md); text-decoration: none; font-size: .85rem; }
+.ranges a[aria-current] { background: var(--surface-tinted); border-color: var(--primary); font-weight: 650; }
+.page a:focus-visible, .page summary:focus-visible, .page [tabindex]:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+.kpis { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: .9rem; margin-block: 1.5rem 2rem; }
+.kpi, .section { border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; background: var(--surface); box-shadow: var(--shadow-sm); min-width: 0; }
+.kpi dt { color: var(--text-muted); font-size: .8rem; }
+.kpi dd { font-size: clamp(1.4rem,3vw,2rem); font-weight: 700; letter-spacing: -.035em; color: var(--primary); margin-top: .5rem; overflow-wrap: anywhere; }
+.kpi small { display: block; color: var(--text-muted); font-size: .7rem; margin-top: .5rem; line-height: 1.5; }
+.section { margin-block: 1.25rem; }
+.note { font-size: .8rem; margin-block: .75rem; }
+.tableWrap { max-width: 100%; overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+.table caption { text-align: left; color: var(--text-muted); font-size: .8rem; padding-bottom: .75rem; }
+.table th, .table td { padding: .8rem; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+.table th { font-weight: 650; }
+.table td:first-child { min-width: 10rem; overflow-wrap: anywhere; }
+.table a { color: var(--primary); display: inline-flex; min-height: 2.75rem; align-items: center; }
+.chart { width: 100%; height: auto; max-height: 18rem; display: block; color: var(--primary); margin-top: 1rem; }
+.chartLabels { display: flex; justify-content: space-between; gap: .5rem; font-size: .75rem; color: var(--text-muted); }
+.section summary { cursor: pointer; min-height: 2.75rem; padding-top: .75rem; color: var(--primary); }
+@media(max-width:900px) { .kpis { grid-template-columns: repeat(3,minmax(0,1fr)); } }
+@media(max-width:600px) { .kpis { grid-template-columns: repeat(2,minmax(0,1fr)); gap: .65rem; } .kpi { padding: 1rem; } .section { padding: 1rem; } .table th, .table td { padding: .6rem; } }

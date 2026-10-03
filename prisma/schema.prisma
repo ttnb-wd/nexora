@@ -257,6 +257,7 @@ model EventRegistration {
 
   @@unique([userId, eventId])
   @@index([eventId, status])
+  @@index([eventId, createdAt])
   @@index([userId, status])
   @@index([checkedInById])
 }

@@ -1,0 +1,13 @@
+import styles from "./analytics.module.css";
+type Trend = { bucket: string; timezone: string; points: { date: string; registrations: number; cumulative: number }[] };
+export function RegistrationTrend({ trend }: { trend: Trend }) {
+  const points = trend.points;
+  const maximum = Math.max(1,...points.map(point => point.cumulative));
+  const timestamps = points.map(point => new Date(`${point.date}T00:00:00Z`).getTime());
+  const minimumTime = timestamps[0] ?? 0, timeSpan = (timestamps.at(-1) ?? 0)-minimumTime;
+  const coordinates = points.map((point,index) => ({ x: timeSpan ? 20+(timestamps[index]-minimumTime)/timeSpan*560 : 300, y: 160-point.cumulative/maximum*140 }));
+  return <section className={styles.section} aria-labelledby="trend-heading"><h2 id="trend-heading">Cumulative registration records</h2>
+    <p className={styles.note}>Grouped by {trend.bucket} in {trend.timezone}; only periods with registrations are listed. Includes cancelled records. Each person is counted once per event at their first registration date; rejoining does not add a new record. The cumulative value includes records before the selected window.</p>
+    {points.length ? <><svg viewBox="0 0 600 180" role="img" aria-labelledby="trend-chart-title trend-chart-description" className={styles.chart}><title id="trend-chart-title">Cumulative first registrations over time</title><desc id="trend-chart-description">{points.length} periods with new registrations; cumulative total reaches {points.at(-1)?.cumulative}. Exact dates and values are in the table below.</desc><path d="M20 160 H580" stroke="currentColor" opacity=".25" fill="none" /><polyline points={coordinates.map(point=>`${point.x},${point.y}`).join(" ")} stroke="currentColor" strokeWidth="3" fill="none" />{coordinates.map((point,index)=><circle key={points[index].date} cx={point.x} cy={point.y} r="3" fill="currentColor" />)}</svg><div className={styles.chartLabels}><span>{points[0].date}</span><span>{points.at(-1)?.date} · {points.at(-1)?.cumulative} records</span></div><details><summary>View registration trend values</summary><div className={styles.tableWrap}><table className={styles.table}><caption>Period starting on the listed date ({trend.timezone})</caption><thead><tr><th scope="col">Period</th><th scope="col">New records</th><th scope="col">Cumulative records</th></tr></thead><tbody>{points.map(point=><tr key={point.date}><th scope="row">{point.date}</th><td>{point.registrations}</td><td>{point.cumulative}</td></tr>)}</tbody></table></div></details></> : <p>No first registrations in this period. Try All time to see earlier records.</p>}
+  </section>;
+}

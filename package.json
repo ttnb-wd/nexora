@@ -35,7 +35,9 @@
     "test:participation:runtime": "node tests/participation-runtime.mjs",
     "test:participation:readonly": "node tests/participation-readonly.mjs",
     "test:social": "node --test tests/follow-notification.test.mjs",
-    "test:social:runtime": "node tests/follow-notification-runtime.mjs"
+    "test:social:runtime": "node tests/follow-notification-runtime.mjs",
+    "test:analytics": "node --test tests/analytics.test.mjs",
+    "test:analytics:runtime": "node tests/analytics-runtime.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
