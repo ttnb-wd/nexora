@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "test:runtime": "node tests/all-runtime-suite.mjs",
+    "test:tickets": "node --test tests/tickets.test.mjs",
+    "test:tickets:runtime": "node tests/tickets-runtime.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -46,6 +49,7 @@
     "motion": "^13.5.0",
     "next": "16.3.8",
     "pg": "8.23.1",
+    "qrcode-generator": "2.0.4",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-hook-form": "^7.89.0",

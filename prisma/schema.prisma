@@ -248,6 +248,9 @@ model EventRegistration {
   updatedAt DateTime           @updatedAt @db.Timestamptz(3)
   checkedInAt DateTime?        @db.Timestamptz(3)
   checkedInById String?
+  ticketTokenHash String? @unique
+  ticketNonce String?
+  ticketIssuedAt DateTime? @db.Timestamptz(3)
   user      User               @relation("EventAttendee", fields: [userId], references: [id], onDelete: Cascade)
   checkedInBy User?            @relation("EventCheckInActor", fields: [checkedInById], references: [id], onDelete: SetNull)
   event     Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)

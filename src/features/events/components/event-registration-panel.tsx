@@ -1,5 +1,6 @@
 "use client";
 import { motion, useReducedMotion } from "motion/react";
+import Link from "next/link";
 import { CalendarDays, Clock3, MapPin, Radio, Check } from "lucide-react";
 import { EventActionButtons, type EventInteractionProps } from "./event-action-buttons";
 import { formatEventDate } from "../event-helpers";
@@ -19,6 +20,7 @@ export function EventRegistrationPanel(props: EventInteractionProps & { reminder
     </dl>
     <p className={styles.availability}><Check size={15} aria-hidden="true" />{attended ? "You attended this event" : joined ? `You are registered${availability.spotsLeft === null ? "" : ` · ${availability.spotsLeft} spots left`}` : availability.closedReason ?? (availability.spotsLeft === null ? "Registration open" : `${availability.spotsLeft} spots left`)}</p>
     <EventActionButtons {...props} /><p className={styles.panelNote}>{message || "Manage your registration and saved events in your dashboard."}</p>
+    {joined && !attended && event.status !== "completed" && <Link href={`/dashboard/joined/${event.slug}/ticket`}>View ticket</Link>}
     {event.calendar && (!joined || event.status === "completed") && <CalendarControl links={event.calendar} title={event.title} />}
     <ReminderControl slug={event.slug} state={props.reminder} />
   </motion.div><p className={styles.panelCaption}>Great things happen when we show up.</p></aside>;

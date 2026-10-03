@@ -32,7 +32,7 @@ export async function mutateParticipation(input: unknown, kind: "join" | "cancel
         const registration = await tx.eventRegistration.findUnique({ where, select: { status: true } });
         if (registration?.status === "ATTENDED") return { ok: false, message: "Attended registrations cannot be cancelled." };
         // Own rows only; cancellation remains possible when the organizer cancels/archives.
-        const cancelled = await tx.eventRegistration.updateMany({ where: { userId: user.id, eventId: event.id, status: "REGISTERED" }, data: { status: "CANCELLED" } });
+        const cancelled = await tx.eventRegistration.updateMany({ where: { userId: user.id, eventId: event.id, status: "REGISTERED" }, data: { status: "CANCELLED", ticketTokenHash: null, ticketNonce: null, ticketIssuedAt: null } });
         await tx.eventReminderPreference.updateMany({ where: { userId: user.id, eventId: event.id, enabled: true }, data: { enabled: false } });
         if (cancelled.count) await notifyRegistration(tx, event, user.id, false);
         return { ok: true, message: "Registration cancelled." };
@@ -49,7 +49,7 @@ export async function mutateParticipation(input: unknown, kind: "join" | "cancel
       if (existing && existing.status !== "CANCELLED") return { ok: false, message: "This registration cannot be changed." };
       const count = await tx.eventRegistration.count({ where: { eventId: event.id, status: { in: [...occupiedRegistrationStatuses] } } });
       if (event.capacity !== null && count >= event.capacity) return { ok: false, message: "This event is full." };
-      await tx.eventRegistration.upsert({ where, create: { userId: user.id, eventId: event.id, status: "REGISTERED" }, update: { status: "REGISTERED", checkedInAt: null, checkedInById: null } });
+      await tx.eventRegistration.upsert({ where, create: { userId: user.id, eventId: event.id, status: "REGISTERED" }, update: { status: "REGISTERED", checkedInAt: null, checkedInById: null, ticketTokenHash: null, ticketNonce: null, ticketIssuedAt: null } });
       // Rejoin starts with reminders off; duplicate joins above preserve an active preference.
       await tx.eventReminderPreference.updateMany({ where: { userId: user.id, eventId: event.id, enabled: true }, data: { enabled: false } });
       await notifyRegistration(tx, event, user.id, true);
