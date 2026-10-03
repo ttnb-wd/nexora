@@ -47,6 +47,7 @@ model User {
   notifications Notification[]
   eventReminders EventReminderPreference[]
   feedback      EventFeedback[]
+  sentInvitations OrganizationInvitation[]
 }
 
 model Session {
@@ -121,6 +122,32 @@ model Organization {
   followers   OrganizationFollower[]
   members     OrganizationMember[]
   events      Event[]
+  invitations OrganizationInvitation[]
+}
+
+enum InvitationRole {
+  ADMIN
+  EDITOR
+  MEMBER
+}
+
+model OrganizationInvitation {
+  id             String @id @default(cuid())
+  organizationId String
+  email          String
+  role           InvitationRole
+  tokenHash      String @unique
+  invitedById    String?
+  expiresAt      DateTime @db.Timestamptz(3)
+  acceptedAt     DateTime? @db.Timestamptz(3)
+  declinedAt     DateTime? @db.Timestamptz(3)
+  revokedAt      DateTime? @db.Timestamptz(3)
+  createdAt      DateTime @default(now()) @db.Timestamptz(3)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invitedBy      User? @relation(fields: [invitedById], references: [id], onDelete: SetNull)
+
+  // Partial unique open-invitation index is maintained in the SQL migration.
+  @@index([organizationId, email])
 }
 
 model OrganizationMember {

@@ -1,0 +1,19 @@
+.section { margin-block: 1.5rem; padding: clamp(1rem, 3vw, 1.75rem); border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
+.section h2 { font-size: 1.35rem; font-weight: 650; margin-bottom: 1rem; }
+.row { padding-block: 1rem; border-bottom: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: space-between; }
+.row:last-child { border-bottom: 0; }
+.identity { min-width: 0; overflow-wrap: anywhere; flex: 1 1 15rem; }
+.actions { display: flex; flex-wrap: wrap; gap: .7rem; align-items: end; }
+.form { display: flex; flex-wrap: wrap; align-items: end; gap: 1rem; }
+.field { display: grid; gap: .4rem; min-width: 0; flex: 1 1 12rem; }
+.field label, .actions label { font-size: .875rem; font-weight: 600; }
+.section input, .section select { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--background); padding: .7rem; font: inherit; max-width: 100%; min-width: 0; }
+.section button { cursor: pointer; }
+.section button:disabled { cursor: wait; opacity: .6; }
+.section :is(input, select, button, a):focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+.message { margin-top: .8rem; overflow-wrap: anywhere; }
+.hint { color: var(--text-muted); font-size: .875rem; margin-block: .5rem; }
+.link { width: 100%; margin-block: .6rem; }
+.dialog { margin: auto; width: min(30rem, calc(100vw - 2rem)); padding: 1.5rem; background: var(--surface); color: var(--foreground); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow-wrap: anywhere; }
+.dialog::backdrop { background: rgb(0 0 0 / .45); }
+@media (max-width: 560px) { .form, .actions { width: 100%; } .form .field { flex-basis: 100%; } .row { align-items: start; } }

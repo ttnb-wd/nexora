@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "test:team": "node --test tests/organization-team.test.mjs",
+    "test:team:runtime": "node tests/organization-team-runtime.mjs",
     "reminders:run": "node scripts/run-reminders.mjs",
     "test:reminders": "node --test tests/reminder-scheduler.test.mjs tests/reminder-runner.test.mjs tests/reminder-cron.test.mjs",
     "test:reminders:runtime": "node tests/reminder-scheduler-runtime.mjs",

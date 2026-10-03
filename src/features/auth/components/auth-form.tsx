@@ -51,6 +51,6 @@ export function AuthForm({ mode, returnTo = "/dashboard" }: { mode: "sign-in" | 
       </fieldset>
       {error && <p role="alert" className={styles.error}>{error}</p>}
     </form>
-    <p className={styles.switch}>{signup ? "Already found your people?" : "New to Nexora?"} <Link href={signup ? "/sign-in" : "/get-started"}>{signup ? "Sign in" : "Create an account"}</Link></p>
+    <p className={styles.switch}>{signup ? "Already found your people?" : "New to Nexora?"} <Link href={`${signup ? "/sign-in" : "/get-started"}?returnTo=${encodeURIComponent(safeReturnPath(returnTo))}`}>{signup ? "Sign in" : "Create an account"}</Link></p>
   </div>;
 }

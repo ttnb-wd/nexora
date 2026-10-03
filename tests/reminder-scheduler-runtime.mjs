@@ -183,15 +183,24 @@ try {
   assert.equal((await notifications(due[1])).length, 1); ledger.runner = runnerResult; pass('existing local runner delivers through the real shared endpoint');
   stage = 'batch';
   const batch = [...due]; const at = Date.now();
+  // The deployed cron shares Neon. Publish the entire disposable batch together
+  // so it cannot consume partially constructed fixtures before ordering checks.
+  await db.eventReminderPreference.updateMany({ where: { id: { in: due.map(item => item.preference.id) } }, data: { enabled: false } });
   for (const item of due) await reschedule(item, new Date(at + (item.preference.reminderMinutes - 3) * 60000));
-  for (let i = 0; i < 47; i++) batch.push(await fixture(`batch-${String(i).padStart(2,'0')}`));
+  for (let i = 0; i < 47; i++) batch.push(await fixture(`batch-${String(i).padStart(2,'0')}`, 15, 'disabled'));
   const expected = batch.slice().sort((a,b) => (a.event.startAt - a.preference.reminderMinutes*60000) - (b.event.startAt - b.preference.reminderMinutes*60000) || (a.preference.id < b.preference.id ? -1 : 1));
-  const selected = await selectDueReminders(db); assert.equal(selected.length, 50); assert.deepEqual(selected.map(x => x.id), expected.slice(0,50).map(x => x.preference.id));
-  const first = await job(); assert.ok(first.delivered > 0 && first.delivered <= 50);
-  for (let i = 0; i < batch.length; i++) assert.equal((await notifications(expected[i])).length, i < first.delivered ? 1 : 0);
-  const batches = [first]; for (let i = 0; i < 4 && batches.reduce((sum,r) => sum+r.delivered,0) < 51; i++) batches.push(await job());
-  assert.equal(batches.reduce((sum,r) => sum+r.delivered,0), 51); for (const item of batch) assert.equal((await notifications(item)).length, 1);
-  ledger.batches = batches; pass('51 due reminders: deterministic 50-row selection, bounded executions, complete drain');
+  await db.$transaction(async tx => {
+    await tx.eventReminderPreference.updateMany({ where: { id: { in: batch.map(item => item.preference.id) } }, data: { enabled: true } });
+    const selected = await selectDueReminders(tx); assert.equal(selected.length, 50); assert.deepEqual(selected.map(x => x.id), expected.slice(0,50).map(x => x.preference.id));
+  });
+  const keys = batch.map(item => reminderDeliveryKey(item.preference.id, item.event.startAt));
+  const persisted = () => db.notification.count({ where: { dedupeKey: { in: keys } } });
+  const first = await job(); assert.ok(first.delivered >= 0 && first.delivered <= 50); assert.ok(await persisted() >= first.delivered);
+  const batches = [first]; for (let i = 0; i < 4 && await persisted() < 51; i++) batches.push(await job());
+  assert.equal(await persisted(), 51); for (const item of batch) assert.equal((await notifications(item)).length, 1);
+  assert.ok(batches.every(result => result.processed <= 50 && result.failed === 0));
+  const localDeliveries = batches.reduce((sum,result) => sum + result.delivered, 0); assert.ok(localDeliveries <= 51);
+  ledger.batches = batches; ledger.overlappingWorkerDeliveries = 51 - localDeliveries; pass('51 due reminders: deterministic 50-row selection, bounded executions, exactly-once drain with overlapping workers');
   stage = 'failure safety'; await reschedule(due[2]); await reschedule(due[3]); await safetyGuard();
   const badKey = reminderDeliveryKey(due[2].preference.id, due[2].event.startAt);
   const faultDb = { $queryRaw: db.$queryRaw.bind(db), $transaction: (fn, options) => db.$transaction(tx => fn(new Proxy(tx, { get(target,key) {
