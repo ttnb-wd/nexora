@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "reminders:run": "node scripts/run-reminders.mjs",
+    "test:reminders": "node --test tests/reminder-scheduler.test.mjs tests/reminder-runner.test.mjs",
+    "test:reminders:runtime": "node tests/reminder-scheduler-runtime.mjs",
     "test:runtime": "node tests/all-runtime-suite.mjs",
     "test:tickets": "node --test tests/tickets.test.mjs",
     "test:tickets:runtime": "node tests/tickets-runtime.mjs",

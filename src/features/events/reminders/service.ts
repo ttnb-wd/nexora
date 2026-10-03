@@ -23,7 +23,7 @@ export async function mutateReminder(db: PrismaClient, userId: string | null, sl
         const reminderMinutes = value.data!;
         await tx.eventReminderPreference.upsert({ where, create: { userId, eventId: event.id, enabled: true, reminderMinutes }, update: { enabled: true, reminderMinutes } });
       }
-      return { ok: true, message: disable ? "Reminder turned off." : "Reminder preference saved. Automatic delivery is not available yet." };
+      return { ok: true, message: disable ? "Reminder turned off." : "In-app reminder saved." };
     }, { isolationLevel: "ReadCommitted", maxWait: 10000, timeout: 15000 });
   } catch { return { ok: false, message: "We could not save your reminder. Please try again." }; }
 }

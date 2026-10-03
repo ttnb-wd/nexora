@@ -26,7 +26,7 @@ export function ReminderControl({ slug, state }: { slug: string; state: Reminder
   return <div className={styles.reminder}><label htmlFor={id}>Reminder preference</label>
     <select id={id} disabled={pending} value={state.enabled ? String(state.reminderMinutes) : "off"} onChange={(event) => change(event.target.value)}>
       <option value="off">Off</option>{reminderMinutes.map((minutes) => <option key={minutes} value={minutes}>{reminderLabels[minutes]}</option>)}
-    </select><p className={styles.note}>Save a preference for future in-app reminders. Automatic delivery is not available yet.</p>
+    </select><p className={styles.note}>Receive an in-app notification before this event starts.</p>
     <p role="status" aria-live="polite" className={styles.note}>{pending ? "Saving reminder…" : message}</p>
   </div>;
 }

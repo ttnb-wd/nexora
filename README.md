@@ -130,3 +130,76 @@ browser test never starts. For the full approved runtime suite set
 NEXORA_DISPOSABLE_APPROVED=1 and STEP18_DISPOSABLE_APPROVED=1 before npm run test:runtime.
 Use a separate test-server port and temporary APP_URL environment override if an
 older localhost server is already running; no .env edit is needed.
+
+## Scheduled in-app reminders (Step 19)
+
+Enabled preferences deliver EVENT_REMINDER notifications only for REGISTERED
+attendees of upcoming PUBLISHED events. PostgreSQL's clock and stored UTC startAt
+control scheduling; timezone is display-only. Supported offsets are 15 minutes,
+30 minutes, 1 hour and 1 day. Notifications use the existing inbox and unread count,
+with title "Event starts soon", the configured offset in the message, and an
+/events/[slug] link. Polling can deliver slightly after the exact due instant;
+missed reminders are never delivered after the event has started.
+
+POST /api/internal/reminders/run is server-only and requires Authorization:
+Bearer <CRON_SECRET>. Configure an independent random secret with at least 32
+bytes of entropy on the server and scheduled caller. An unset/short/whitespace
+secret disables the job (503). Missing/wrong credentials return 401; GET cannot
+mutate (405). SHA-256 digests are compared using timingSafeEqual. Requests must
+have no body or query parameters: clients cannot select users/events, override
+server time, or increase the batch. Secrets never enter public env variables,
+responses or logs. Responses contain processed, delivered, skipped and failed
+counts only; partial failures return 503 so the caller can retry safely.
+
+Each invocation selects at most 50 eligible, undelivered preferences ordered by
+due time then preference id. The query restricts event startAt to the next day
+and uses existing Event(status,startAt), reminder(eventId,enabled), registration
+unique(userId,eventId), and Notification(dedupeKey) indexes. No schema change or
+migration is needed. Per-candidate transactions lock the parent event before
+re-reading eligibility. Notification creation is atomic: its unique dedupeKey
+is itself the persistent delivery record (reminder:preferenceId:startAtEpochMs).
+Concurrent attempts use skipDuplicates. Reading the notification preserves this
+record. Off/on toggles, offset edits and cancel/rejoin do not resend a delivered
+reminder for the same event start. Rescheduling startAt creates a new occurrence.
+Rejoin continues to leave the preference Off until the attendee explicitly sets
+it again. Disabling/cancellation before processing prevents delivery; it does not
+retract a notification already delivered. Failures leave no new delivery record.
+
+For local development, configure CRON_SECRET in .env.local, restart the server,
+and run npm run reminders:run while the server is running. The command calls the
+same secure endpoint at APP_URL; it contains no duplicate scheduler logic and
+does not use the LAN/public ticket URL. It refuses redirects and non-HTTPS remote
+origins to protect the bearer token. This command performs real writes: use it
+only when reminder delivery against the configured database is intended.
+
+For deployment, arrange an existing scheduled HTTP caller to POST to the deployed
+HTTPS endpoint every minute with the bearer header and no body/query. Store the
+secret in that caller's secret configuration, not a committed URL or cron command.
+Use a 65-second caller timeout, avoid overlapping runs where practical, and retry
+non-2xx responses with bounded backoff. Each call drains up to 50; monitor summary
+counts and call again for a sustained backlog. The route allows 60 seconds; verify
+that the hosting plan supports that runtime. A scheduler that only sends GET
+requires a secure POST adapter; this endpoint intentionally does not enable GET
+mutation. No external scheduler or infrastructure is provisioned in this step.
+
+Run npm run test:reminders for isolated in-memory scheduler/security tests and
+node tests/reminder-scheduler-readonly.mjs for PostgreSQL-enforced read-only SQL,
+query plan and SQL/JavaScript delivery-key parity checks. Real delivery,
+PostgreSQL concurrency, notification UI and cleanup verification require explicit
+disposable-data approval. Never run the mutation-based runtime suites without it.
+The processor also stops starting new transactions after a 40-second soft work
+budget, leaving remaining candidates for the next invocation. processed counts
+only attempted candidates; delivered + skipped + failed equals processed.
+
+Step 19 real-write verification is available as npm run test:reminders:runtime.
+It requires explicit approval and STEP19_DISPOSABLE_APPROVED=1. The suite launches
+its own local production server on 127.0.0.1:3003 with an ephemeral CRON_SECRET,
+checks that no business reminder can become due during testing, creates unique
+step19-runtime-test fixtures, exercises the real endpoint/runner/inbox, and cleans
+up in finally. It compares hashes/counts of every public table and schema metadata
+before/after. The batch test uses 51 due preferences (plus five ineligible cases),
+not hundreds of records. Three concurrency rounds hold only a disposable event
+lock to force both HTTP jobs to overlap. Failure safety injects a division-by-zero
+query inside one disposable delivery transaction; it never changes schema.
+Run npm run build first. The existing dev server and saved env files are untouched.
+Run ledgers and sanitized server logs are saved under artifacts/step19/real-world-*.
