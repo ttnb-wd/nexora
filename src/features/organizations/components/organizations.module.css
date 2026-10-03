@@ -212,3 +212,5 @@
 @media (max-width: 1023px) { .profileHero { gap: 1.5rem; } .profileArtwork { min-height: 25rem; } .artworkStatement { margin-inline: 1.4rem; font-size: 2.3rem; } .profile .contactGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 700px) { .profileHero { grid-template-columns: 1fr; gap: 1.2rem; } .profileIdentity h1 { font-size: clamp(2.3rem, 9vw, 3.4rem); } .profileIdentity .identityMark { width: 4rem; height: 4rem; margin-bottom: 1rem; } .profileArtwork { min-height: 18rem; } .artworkStatement { margin: 3.7rem 1.4rem 7.3rem; font-size: 2rem; max-width: 18ch; } .profileArtwork .symbol { width: 3rem; height: 3rem; top: 1.4rem; right: 1rem; } .profileArtwork .monogram { font-size: 6rem; bottom: 4rem; } .profileArtwork .visualLabel { top: 1.2rem; left: 1.4rem; font-size: .5rem; } .profile .profileNav { max-width: 100%; } .heroDescription { font-size: .87rem; } .profile .eventGrid { grid-template-columns: 1fr; } }
 @media (max-width: 600px) { .profile .contactGrid { grid-template-columns: 1fr; } }
+
+.pattern, .symbol, .visualLabel, .monogram, .visualFooter { pointer-events: none; }

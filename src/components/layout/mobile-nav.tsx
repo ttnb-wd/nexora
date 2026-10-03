@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { motion, useReducedMotion } from "motion/react";
 import { ArrowUpRight, Search, X } from "lucide-react";
 import { buttonStyles } from "@/components/ui/button";
-import { siteConfig } from "@/config/site";
+import { siteConfig, isNavigationActive } from "@/config/site";
 import { motionTokens } from "@/config/motion";
 import { AccountMenu, type AccountIdentity } from "@/features/auth/components/account-menu";
 import styles from "./site-header.module.css";
@@ -59,7 +59,7 @@ export function MobileNav({ onClose, user }: { onClose: () => void; user?: Accou
         <div className={styles.drawerTop}><h2 id="mobile-nav-title">Your next direction.</h2><button type="button" className={styles.closeButton} aria-label="Close navigation" onClick={onClose}><X size={20} aria-hidden="true" /></button></div>
         <p className={styles.drawerEyebrow}>GO WHERE CURIOSITY TAKES YOU</p>
         <nav aria-label="Mobile navigation" className={styles.drawerLinks}>
-          {siteConfig.navigation.map((item, index) => <Link key={item.href} href={item.href} onClick={onClose} aria-current={(pathname === item.href || pathname.startsWith(`${item.href}/`)) ? "page" : undefined}><small>0{index + 1}</small>{item.label}<ArrowUpRight size={22} aria-hidden="true" /></Link>)}
+          {siteConfig.navigation.map((item, index) => <Link key={item.href} href={item.href} onClick={onClose} aria-current={isNavigationActive(pathname, item.href) ? "page" : undefined}><small>0{index + 1}</small>{item.label}<ArrowUpRight size={22} aria-hidden="true" /></Link>)}
         </nav>
         <Link href="/explore#event-search" onClick={onClose} className={styles.drawerSearch}><Search size={18} aria-hidden="true" />Search events<ArrowUpRight size={16} aria-hidden="true" /></Link>
         <div className={styles.drawerActions}>{user ? <AccountMenu user={user} onNavigate={onClose} /> : <><Link href="/sign-in" onClick={onClose} className={buttonStyles({ variant: "secondary" })}>Sign in</Link><Link href="/get-started" onClick={onClose} className={buttonStyles()}>Get started <ArrowUpRight aria-hidden="true" /></Link></>}</div>

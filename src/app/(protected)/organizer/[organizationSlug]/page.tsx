@@ -13,6 +13,7 @@ export default async function OrganizationManagementPage({ params, searchParams 
   const canManage = ["OWNER", "ADMIN"].includes(membership.role);
   return <main id="main-content" tabIndex={-1} className={styles.page}><Container>
     <Link href="/organizer" className={styles.back}>← Your organizations</Link>
+    <p><Link href={`/companies/${organization.slug}`} className={styles.back}>View organization profile →</Link></p>
     <div className={styles.header}><div><p className={styles.eyebrow}>ORGANIZATION OVERVIEW</p><h1>{organization.name}</h1><p className={styles.intro}>{[organization.industry, organization.city, organization.region].filter(Boolean).join(" · ") || "Your organization’s story starts here."}</p><span className={styles.badge}>Your role: {membership.role}</span></div>{canManage && <Link href={`/organizer/${organization.slug}/settings`} className={buttonStyles({ variant: "secondary" })}>Organization settings</Link>}</div>
     {(await searchParams).saved === "1" && <p role="status" className={styles.success}>Organization details saved.</p>}
     <section className={`${styles.card} ${styles.overview}`}><h2>About your organization</h2><p>{organization.description || "Add a description in settings to tell your organization’s story."}</p>{organization.shortName && <p>Short name: {organization.shortName}</p>}{organization.website && <p>Website: <a href={organization.website} target="_blank" rel="noopener noreferrer">{organization.website}</a></p>}<p className={styles.hint}>Organization URL: {organization.slug}</p></section>

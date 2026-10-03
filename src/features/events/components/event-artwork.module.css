@@ -35,3 +35,5 @@
 @media (max-width: 600px) { .hero { min-height: 21rem; } .hero .headline { font-size: 3rem; } .hero .ring { width: 21rem; height: 21rem; top: -10%; } }
 @media (prefers-reduced-motion: reduce) { .artwork:hover .art { transform: none; } }
 @media (forced-colors: active) { .artwork { border: 1px solid CanvasText; } }
+
+.artwork { pointer-events: none; }

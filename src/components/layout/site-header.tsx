@@ -8,7 +8,7 @@ import { ArrowUpRight, Asterisk, Bell, Grid2X2, Search } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { buttonStyles } from "@/components/ui/button";
-import { siteConfig } from "@/config/site";
+import { siteConfig, isNavigationActive } from "@/config/site";
 import { authClient } from "@/features/auth/client";
 import { AccountMenu } from "@/features/auth/components/account-menu";
 import styles from "./site-header.module.css";
@@ -32,7 +32,7 @@ export function SiteHeader({ unreadCount = null, authenticated = false }: { unre
       <Container className={styles.inner}>
         <Link href="/" className={styles.brand} aria-label="Nexora home"><span><Asterisk aria-hidden="true" /></span>nexora<i>.</i></Link>
         <nav aria-label="Main navigation" className={styles.desktopNav}>
-          {siteConfig.navigation.map((item) => <Link key={item.href} href={item.href} aria-current={(pathname === item.href || pathname.startsWith(`${item.href}/`)) ? "page" : undefined}>{item.label}</Link>)}
+          {siteConfig.navigation.map((item) => <Link key={item.href} href={item.href} aria-current={isNavigationActive(pathname, item.href) ? "page" : undefined}>{item.label}</Link>)}
         </nav>
         <div className={styles.actions}>
           <Link href="/explore#event-search" className={styles.search} aria-label="Search events"><Search size={18} aria-hidden="true" /><span>Search</span></Link>

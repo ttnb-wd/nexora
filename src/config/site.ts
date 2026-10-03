@@ -10,3 +10,8 @@ export const siteConfig = {
     { label: "Create Event", href: "/create-event" },
   ],
 } as const;
+
+export function isNavigationActive(pathname: string, href: string) {
+  return pathname === href || pathname.startsWith(`${href}/`)
+    || (href === "/explore" && pathname.startsWith("/events/"));
+}

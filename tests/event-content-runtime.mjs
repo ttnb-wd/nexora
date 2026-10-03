@@ -153,8 +153,8 @@ try {
   const empty=await fixture('empty');
   html=await page(empty);assert.ok(!html.includes('id="agenda"')&&!html.includes('id="speakers"')&&!html.includes('id="resources"'));
   await db.event.update({where:{id:empty.id},data:{status:'COMPLETED'}});
-  assert.ok((await page(empty)).includes('No resources published yet.'));
-  pass('empty upcoming sections hidden; completed resources show compact empty state');
+  assert.ok(!(await page(empty)).includes('id="resources"'));
+  pass('empty upcoming and completed sections hidden');
   // Independent simultaneous requests exercise serialization in separate DB transactions.
   const { mutateEventContent } = await import('../src/features/events/server/content-service.ts');
   const makeForm=()=>{const form=new FormData();for(const[key,value]of Object.entries(definitions.Speaker.fields))form.set(key,value);return form;};

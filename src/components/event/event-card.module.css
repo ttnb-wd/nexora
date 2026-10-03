@@ -63,3 +63,13 @@
 .completed .visual { filter: saturate(.5); opacity: .82; }
 .completed .type { background: #e9edf2; color: #455665; border-radius: 2rem; padding: .2rem .5rem; }
 .archiveLink { display: inline-flex; align-items: center; min-height: 2.75rem; font-size: .7rem; color: var(--ink); text-underline-offset: 3px; }
+
+/* Stretch the event link over the card; sibling controls sit above it. */
+.card { position: relative; isolation: isolate; }
+.card:not(.decorative) { cursor: pointer; }
+.actions { position: static; }
+.eventLink::after { content: ""; position: absolute; inset: 0; z-index: 2; border-radius: 1.35rem; }
+.eventLink:focus-visible { outline: none; }
+.eventLink:focus-visible::after { outline: 3px solid var(--ink); outline-offset: 4px; }
+.organizer a, .save, .details, .archiveLink { position: relative; z-index: 3; }
+.save:focus-visible, .details summary:focus-visible, .organizer a:focus-visible, .archiveLink:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }

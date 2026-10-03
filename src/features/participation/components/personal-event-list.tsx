@@ -29,7 +29,7 @@ function PersonalEvent({ row, saved }: { row: Row; saved: boolean }) {
     {row.publicVisible ? <EventCard event={row.event} variant="compact" /> : <><h2>{row.event.title}</h2><p>{row.event.date} · {row.event.time}</p><p>{row.event.organizer.name} · {row.event.location.city} · {row.event.type}</p></>}
     <p>{row.eventStatus === "CANCELLED" ? "Event cancelled by the organizer" : row.eventStatus === "ARCHIVED" ? "Event archived" : row.eventStatus === "DRAFT" ? "Event no longer publicly available" : row.event.status === "completed" ? "Event completed" : "Upcoming event"}</p>
     {!saved && <p>Registration: {registrationStatusLabels[row.registrationStatus as keyof typeof registrationStatusLabels] ?? row.registrationStatus}</p>}
-    {!saved && active && row.eventStatus === "PUBLISHED" && row.event.status !== "completed" && <Link href={`/dashboard/joined/${row.event.slug}/ticket`} className={buttonStyles({ variant: "secondary" })}>View ticket</Link>}
+    {!saved && ((active && row.eventStatus === "PUBLISHED" && row.event.status !== "completed") || (row.registrationStatus === "ATTENDED" && row.publicVisible)) && <Link href={`/dashboard/joined/${row.event.slug}/ticket`} className={buttonStyles({ variant: "secondary" })}>View ticket</Link>}
     {!saved && row.registrationStatus === "ATTENDED" && <p>Checked in</p>}
     {!saved && active && row.event.calendar && <CalendarControl links={row.event.calendar} title={row.event.title} />}
     {!saved && row.reminder?.eligible && <p>Reminder preference: {row.reminder.enabled ? reminderLabels[row.reminder.reminderMinutes as keyof typeof reminderLabels] : "Off"} · <Link href={`/events/${row.event.slug}`}>Change reminder</Link></p>}

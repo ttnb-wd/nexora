@@ -41,7 +41,7 @@ export function OrganizationProfile({ organization, upcoming, past, related }: {
   const reduced = useReducedMotion();
   const visibleSections = sectionLinks.filter((section) => (section.id !== "about" || organization.description || organization.city || organization.region || organization.industry) && (section.id !== "contact" || organization.website));
   return <main id="main-content" tabIndex={-1} className={cn(styles.profile, styles[organization.visualTheme])}><Container>
-    <Link href="/companies" className={styles.back}><ArrowLeft size={15} aria-hidden="true" />All organizations</Link>
+    <Link href="/companies" className={styles.back}><ArrowLeft size={15} aria-hidden="true" />Back to Companies</Link> <Link href="/explore" className={styles.back}>Explore events</Link>
     <FadeUp distance={18} duration={.55}>
       <header className={styles.profileHero}>
         <div className={styles.profileIdentity}>

@@ -18,7 +18,14 @@ export async function loadOwnTicket(db: PrismaClient, userId: string, slug: stri
   return db.$transaction(async tx => {
     if (issue) await tx.$queryRaw`SELECT "id" FROM "Event" WHERE "slug" = ${slug} FOR UPDATE`;
     const row = await tx.eventRegistration.findFirst({ where: { userId, event: { slug } }, select: ownerSelect });
-    if (!row || !ticketEligible(row.event, row.status)) return null;
+    if (!row) return null;
+    // An attended viewer can revisit an existing ticket, but never issue a new one.
+    if (row.status === "ATTENDED") {
+      if (!["PUBLISHED", "COMPLETED"].includes(row.event.status) || !row.ticketNonce || !row.ticketTokenHash || !row.ticketIssuedAt) return null;
+      const token = tokenFromNonce(row.ticketNonce, secret);
+      return hashTicketToken(token) === row.ticketTokenHash ? { token, name: row.user.name, status: row.status, event: row.event } : null;
+    }
+    if (!ticketEligible(row.event, row.status)) return null;
     let token: string;
     if (!row.ticketNonce || !row.ticketTokenHash) {
       if (!issue) return null;
@@ -39,7 +46,7 @@ export async function loadOwnTicket(db: PrismaClient, userId: string, slug: stri
   }, { isolationLevel: "ReadCommitted", maxWait: 10000, timeout: 15000 });
 }
 
-export async function checkInByTicket(db: PrismaClient, actorId: string, input: { eventId: string; scope: string | null; token: unknown }, appUrl: string): Promise<ScanState & { slug?: string }> {
+export async function checkInByTicket(db: PrismaClient, actorId: string, input: { eventId: string; scope: string | null; token: unknown }, appUrl: string | string[]): Promise<ScanState & { slug?: string }> {
   const target = attendeeTargetSchema.omit({ registrationId: true }).safeParse(input);
   if (!target.success) return { message: "This check-in request is invalid." };
   try {

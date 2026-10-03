@@ -92,3 +92,25 @@ test('public landing page has no private lookup and GET performs no attendance m
   const page = readFileSync('src/app/(public)/check-in/ticket/page.tsx', 'utf8');
   for (const privateField of ['getDb', 'getCurrentUser', 'checkedInById', 'email', 'ticketTokenHash']) assert.ok(!page.includes(privateField));
 });
+
+test('attended viewer can reopen an existing issued ticket without issuing or rotating a credential', async () => {
+  const state = setup();
+  const ticket = await loadOwnTicket(state.db, 'attendee', 'event-slug', secret, true);
+  await state.scan(ticket.token);
+  const writes = state.writes.length;
+  state.event.endAt = new Date(0);
+  state.event.status = 'COMPLETED';
+  const view = await loadOwnTicket(state.db, 'attendee', 'event-slug', secret, true);
+  assert.equal(view.status, 'ATTENDED'); assert.equal(view.token, ticket.token);
+  assert.equal(state.writes.length, writes);
+  state.row.ticketTokenHash = null;
+  assert.equal(await loadOwnTicket(state.db, 'attendee', 'event-slug', secret, true), null);
+  assert.equal(state.writes.length, writes);
+});
+
+test('QR with public event context validates through the same authorized check-in transition', async () => {
+  const state = setup();
+  const ticket = await loadOwnTicket(state.db, 'attendee', 'event-slug', secret, true);
+  const result = await state.scan(tokenApi.ticketUrl(ticket.token, origin, 'event-slug'));
+  assert.ok(result.ok); assert.equal(state.row.status, 'ATTENDED');
+});

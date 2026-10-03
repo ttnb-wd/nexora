@@ -1,6 +1,7 @@
 "use server";
 import { getCurrentUser } from "@/features/auth/server/session";
 import { getDb } from "@/lib/db";
+import { getPublicAppUrl } from "@/lib/public-url-server";
 import { getAuthEnvironment } from "@/lib/env";
 import { revalidatePath } from "next/cache";
 import { checkInByTicket, loadOwnTicket } from "./service";
@@ -21,7 +22,7 @@ export async function scanEventTicket(eventId: string, scope: string | null, _pr
   try {
     const user = await getCurrentUser();
     if (!user) return { message: "Sign in to check in attendees." };
-    const result = await checkInByTicket(getDb(), user.id, { eventId, scope, token: form.get("token") }, getAuthEnvironment().APP_URL);
+    const result = await checkInByTicket(getDb(), user.id, { eventId, scope, token: form.get("token") }, [getAuthEnvironment().APP_URL, getPublicAppUrl()]);
     if (result.ok) {
       const path = scope ? `/organizer/${scope}/events/${eventId}` : `/dashboard/events/${eventId}`;
       for (const value of [path, `${path}/attendees`, `${path}/check-in`, "/dashboard", "/dashboard/joined", "/dashboard/saved", `/events/${result.slug}`]) revalidatePath(value);

@@ -1,6 +1,6 @@
 import "server-only";
 import qrcode from "qrcode-generator";
-import { getAuthEnvironment } from "@/lib/env";
+import { getPublicAppUrl } from "@/lib/public-url-server";
 import { formatManagedEventDate } from "@/features/events/timezone";
 import { ticketUrl } from "../token";
 import type { loadOwnTicket } from "./service";
@@ -8,7 +8,7 @@ import type { TicketDisplay } from "../types";
 
 export function displayTicket(ticket: NonNullable<Awaited<ReturnType<typeof loadOwnTicket>>>): TicketDisplay {
   const qr = qrcode(0, "M");
-  qr.addData(ticketUrl(ticket.token, getAuthEnvironment().APP_URL));
+  qr.addData(ticketUrl(ticket.token, getPublicAppUrl(true), ticket.event.slug));
   qr.make();
   return {
     token: ticket.token, name: ticket.name, status: ticket.status,

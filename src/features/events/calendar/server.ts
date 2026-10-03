@@ -1,6 +1,6 @@
 import "server-only";
 import { getDb } from "@/lib/db";
-import { getAuthEnvironment } from "@/lib/env";
+import { getPublicAppUrl } from "@/lib/public-url-server";
 import { participationSlugSchema } from "@/features/participation/rules";
 import { buildGoogleCalendarUrl, type CalendarEvent } from "./calendar";
 export const calendarSelect = { id: true, slug: true, title: true, description: true, shortDescription: true,
@@ -10,5 +10,5 @@ export async function getCalendarEvent(slug: string) {
   return getDb().event.findFirst({ where: { slug, status: { in: ["PUBLISHED", "COMPLETED"] } }, select: calendarSelect });
 }
 export function getCalendarLinks(event: CalendarEvent) {
-  return { google: buildGoogleCalendarUrl(event, getAuthEnvironment().APP_URL), ics: `/events/${encodeURIComponent(event.slug)}/calendar.ics` };
+  return { google: buildGoogleCalendarUrl(event, getPublicAppUrl()), ics: `/events/${encodeURIComponent(event.slug)}/calendar.ics` };
 }

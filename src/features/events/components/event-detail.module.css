@@ -117,3 +117,15 @@
 @media (max-width: 540px) { .speakerGrid, .venue, .resourceGrid, .relatedGrid { grid-template-columns: 1fr; } .heroMeta p { font-size: .76rem; } .sectionHeading h2 { font-size: 1.7rem; } .timeline li { grid-template-columns: 3.8rem 1fr; gap: .6rem; } .timelineCopy { padding-left: 1rem; } .map { min-height: 15rem; } .resourcesSoon { padding: 1.2rem; } .mobileJoin { gap: .5rem; padding-inline: 1rem; } .mobileJoin strong { font-size: .65rem; } .mobileJoin small { max-width: 11rem; font-size: .55rem; } .mobileJoin .join { gap: .4rem; padding-inline: .65rem; } }
 @media (prefers-reduced-motion: reduce) { .heroVisual, .join:hover, .save:hover { transform: none; } .progress { display: none; } }
 @media (forced-colors: active) { .join, .save, .tags li, .heroLabels span { border: 1px solid ButtonText; } .timelineCopy::before { background: CanvasText; } }
+
+.save { text-decoration: none; max-width: 100%; }
+.actionButtons > *:focus-visible { outline: 3px solid #337780; outline-offset: 3px; }
+@media (max-width: 767px) {
+  .mobileJoin { flex-direction: column; align-items: stretch; }
+  .mobileJoin > div:first-child { display: none; }
+  .mobileJoin .actionButtons { flex-shrink: 1; }
+  .mobileJoin .save span { display: inline; }
+  .mobileJoin .join, .mobileJoin .save { min-height: 2.75rem; font-size: .73rem; padding: .55rem .7rem; }
+  :global(body):has(.page) { padding-bottom: calc(9rem + env(safe-area-inset-bottom)); }
+  .heroCopy .actionButtons .join { flex-basis: 100%; }
+}
