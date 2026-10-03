@@ -11,6 +11,7 @@ const { mutateReminder } = await import('../src/features/events/reminders/servic
 nextEnv.loadEnvConfig(process.cwd());
 assert.equal(process.env.STEP16_DISPOSABLE_APPROVED,'1','Explicit disposable Neon approval required.');
 const origin=process.env.STEP16_ORIGIN??process.env.APP_URL;
+const publicOrigin=process.env.PUBLIC_APP_URL?.trim() || origin;
 assert.ok(['localhost','127.0.0.1'].includes(new URL(origin).hostname));
 const db=new PrismaClient({adapter:new PrismaPg({connectionString:process.env.DATABASE_URL}),log:[]});
 const run=randomUUID(),hex=run.replaceAll('-',''),userIds=[],eventIds=[];
@@ -65,7 +66,7 @@ try{
  pass('5-7 draft/cancelled/archived/unknown blocked; completed public event exports');
  const publicHtml=await html(`/events/${event.slug}`);
  const encoded=publicHtml.match(/href="(https:\/\/calendar\.google\.com[^\"]+)"/)[1].replaceAll('&amp;','&');const google=new URL(encoded);
- assert.equal(google.searchParams.get('text'),event.title);assert.equal(google.searchParams.get('dates'),'20900620T033000Z/20900620T053000Z');assert.equal(google.searchParams.get('ctz'),'Asia/Yangon');assert.ok(google.searchParams.get('details').includes(`${origin}/events/${event.slug}`));
+ assert.equal(google.searchParams.get('text'),event.title);assert.equal(google.searchParams.get('dates'),'20900620T033000Z/20900620T053000Z');assert.equal(google.searchParams.get('ctz'),'Asia/Yangon');assert.ok(google.searchParams.get('details').includes(`${publicOrigin}/events/${event.slug}`));
  pass('8 Google Calendar URL safely encodes title, UTC dates, timezone, public description, location and canonical URL');
  const preference=()=>db.eventReminderPreference.findUnique({where:{userId_eventId:{userId:attendee.id,eventId:event.id}}});
  assert.ok((await invoke('setEventReminder',[event.slug,15],attendee)).ok);assert.equal((await preference()).reminderMinutes,15);

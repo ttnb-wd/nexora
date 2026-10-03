@@ -314,3 +314,181 @@ It starts an isolated production server and headless Chrome, creates uniquely
 prefixed fixtures, and cleans them in finally. Cookies stay in memory. Artifacts
 under artifacts/step20 record exact created/cleaned counts and business-table
 before/after hashes (ephemeral authentication rate-limit maintenance is excluded). Do not run mutating suites simultaneously.
+
+## Step 22: production transactional invitation email
+
+Organization invitations use the official `resend` SDK (pinned to 6.32.0).
+There is no SMTP, newsletter, reminder-email or password-reset change.
+Production requires Node.js >=22.12.0, as required by this SDK; check the Render
+service's runtime version before deployment. Keep the existing Render Web Service,
+Neon database and cron-job.org reminder scheduler.
+
+### Architecture and security
+
+`src/lib/email/` owns lazy configuration, provider transport, typed outcomes and
+an escaped HTML/plain-text invitation template. `src/services/email/` owns the
+organization invitation message. `team/delivery.ts` orchestrates Step 21's existing
+invitation service; UI/actions never call Resend directly.
+
+Creation commits first. A separate organization-locked claim rechecks current
+role, token hash, active invitation, expiration and that no email attempt was
+already made. Attempt count and timestamp commit before sending. No database
+transaction or organization lock is held during the network request. The provider
+request has an 8-second deadline and AbortSignal; even an unresponsive transport
+cannot indefinitely block the action. Each invitation has an idempotency key
+containing only its internal invitation identifier. There are no automatic retries.
+A concurrent revoke/accept can invalidate an in-flight emailed link; it never
+makes a revoked link usable again.
+
+The official SDK owns payload serialization, authentication and idempotency. Its
+public fetch transport is overridden because SDK 6.32.0 otherwise logs raw provider
+errors in development. Nexora discards provider error bodies and retains only a
+safe status category. The endpoint is pinned to the official Resend API so a
+RESEND_BASE_URL environment override cannot divert credentials. Neither raw errors,
+authorization headers, keys, recipients, email bodies nor tokens enter application
+logs. Logs contain operation, outcome and an application-owned failure category.
+
+Raw invitation tokens remain cryptographically random, are only hashed in Neon,
+and are never recoverable from storage. Successful email actions return only a
+safe message and `delivery: sent`, with no invitation URL/token. Failed or uncertain
+attempts return the one-time Copy Link fallback only to the authorized creator.
+The URL is not persisted in the database, localStorage or analytics. Reloading
+hides the fallback. The invitation preview never exposes recipient email, internal
+identifiers or provider metadata. Acceptance still requires signing in with the
+invited email address; creating an invitation does not reveal account existence.
+
+The responsive message includes Nexora branding, organization, invited role,
+inviter display name when available, seven-day expiration in UTC, one CTA, the
+fallback URL and a concise private-link/why-you-received-this note. All dynamic
+HTML is escaped; names in subjects/plain text have control characters removed.
+There are no remote images or tracking pixels.
+
+### Delivery metadata and retries
+
+The new additive migration `20261003130000_transactional_email_delivery` adds:
+`emailSentAt`, `emailProviderMessageId`, `emailLastAttemptAt`, `emailSendAttempts`
+(default 0), and `emailFailureCategory`. Existing migrations are unchanged.
+No email body or complete provider response is stored. Sent means API acceptance,
+not confirmed inbox delivery. The stored provider ID gives future delivered,
+bounced and complained webhooks a correlation point; webhook processing is not
+implemented in Step 22.
+
+Missing configuration, invalid credentials/domain, provider rate limits, invalid
+recipient, timeout or transient failures preserve the valid invitation. The UI
+reports “Invitation created but email could not be sent” with safe guidance and
+Copy Link. If metadata persistence fails after provider acceptance, status is
+unconfirmed and the UI also gives a Copy Link fallback without auto-resending.
+A process crash after claiming an attempt leaves “Status unconfirmed”.
+
+Retry is labeled **Reissue & send**. It rechecks authorization, revokes the old row
+and creates a fresh token and expiration atomically, then attempts email. The old
+link stays permanently revoked even if the new send fails. Expired, accepted,
+declined and revoked invitations cannot be reissued/sent; create a new invitation
+for an expired recipient. Old rows remain as status history. The team UI shows
+Sent, Send failed, Not sent, Status unconfirmed, Accepted, Declined, Expired or
+Revoked; provider IDs never reach it. A reissued row's prior action result remains
+mounted so failed delivery does not lose the new Copy Link fallback.
+
+Existing database rate-limit infrastructure protects email actions: 30 create or
+reissue attempts per actor per hour, 60 emails per organization per hour, 5 per
+organization/recipient per hour, and at least one minute before reissuing a new
+invitation. Recipient rate keys are hashes, not addresses. Organization/recipient
+limits and revocation are in the same transaction; denial rolls revocation back.
+No external rate-limit infrastructure was added.
+
+### Exact Render environment configuration
+
+In Render Dashboard → the Nexora Web Service → Environment, set:
+
+| Variable | Value to supply |
+| --- | --- |
+| RESEND_API_KEY | A server-only sending API key from your Resend account; preferably restricted to the sending domain |
+| EMAIL_FROM | `Nexora <hello@YOUR_VERIFIED_SENDING_DOMAIN>` |
+| EMAIL_REPLY_TO | A monitored support address; optional if replies are not configured |
+| PUBLIC_APP_URL | The exact deployed HTTPS application origin, without path, query, fragment or credentials |
+
+Never prefix these secrets with NEXT_PUBLIC_. No real values belong in source
+control. `.env.example` contains empty entries and examples only. EMAIL_FROM must
+use your verified custom sending domain. Production rejects Resend's shared
+sandbox sender and reserved example/test sender domains; Resend authoritatively
+checks domain verification when sending. EMAIL_REPLY_TO must be a valid address
+if present. Configuration is lazy: unrelated development pages need no Resend key.
+A missing key gives an explicit typed configuration failure, never fake success.
+PUBLIC_APP_URL is required for invitations with no APP_URL fallback. APP_URL
+continues to configure Better Auth and should remain the deployed auth origin.
+No localhost, Render hostname or future custom domain is hardcoded in email URLs.
+
+Save the Render Environment changes and choose Save, rebuild, and deploy (or
+manually deploy the new commit after saving). Keep the existing deployment
+commands, and ensure deployment runs `npm run db:migrate` against the intended
+Neon branch before serving the new build. Then run `npm run db:status` to verify
+all migrations are applied. A typical existing Node build is `npm ci && npm run
+build` and start is `npm run start`; use the service's current migration hook.
+Do not change the reminder scheduler configuration.
+
+### Resend domain setup and one manual test (approval required)
+
+1. In [Resend Domains](https://resend.com/domains), add a custom domain or sending
+   subdomain that you own and can edit in DNS.
+2. In your DNS host, copy **exactly** the names, types, values and priorities shown
+   by Resend for SPF/DKIM and sending records. Do not guess or hardcode records.
+   Follow Resend's DNS-host guidance for subdomain suffixes and proxy settings.
+   Add DMARC according to your domain's existing policy. Do not replace existing
+   mailbox MX records with unrelated receiving-email records.
+3. Select Verify DNS Records in Resend. Wait until the domain's sending status is
+   verified/enabled. The address/domain in EMAIL_FROM must match that domain.
+4. Turn **open tracking and click tracking off** for this sending domain. Secure
+   invitation URLs must not be rewritten into tracking links or copied into click
+   analytics. See [Resend domain settings](https://resend.com/docs/dashboard/domains/introduction).
+5. Create a sending-permission API key, scoped to that domain when available.
+   Enter it only in Render Environment; never paste it into source, logs or chat.
+6. Set the Render variables above, save/redeploy, confirm Node runtime and migration
+   status, and check that the HTTPS public origin matches the running app.
+7. Obtain explicit approval for **one specific test recipient and one real email**.
+   No automated suite is allowed to trigger that external send. Use a verified
+   test sending domain and an approved recipient you control.
+8. After approval, sign in as an authorized owner/admin and create one invitation
+   from the Team UI. Confirm Sent and exactly one Resend API message. Check inbox
+   and spam folders; verify branding, organization, role, expiry and fallback URL.
+9. Open the CTA while signed out. Sign in with the invited email and verify return
+   to the invitation. Accept. Confirm the correct membership/role on Team and
+   Accepted status. Do not reissue or send a second email as part of this test.
+10. Check safe Render logs for outcome only; no keys, raw tokens, recipients or
+    bodies. Keep test URLs private. Revoke any unused test invitation and remove
+    the disposable test membership when appropriate.
+
+Reference: [official SDK](https://github.com/resend/resend-node),
+[send API](https://resend.com/docs/api-reference/emails/send-email),
+[provider error reference](https://resend.com/docs/api-reference/errors).
+
+### Automated verification
+
+`npm run test:email` runs 20 isolated tests with a mocked Resend network boundary,
+including the real official SDK's payload construction. No network call can leave
+that process. `tests/support/mock-resend.mjs` is a test-only preload that blocks
+real Resend traffic in child Next servers regardless of live environment keys.
+It is never imported by production application code.
+
+Run `node --test tests/*.test.mjs`, `npm run typecheck`, `npm run lint`, `npm run
+build`, `npx prisma validate`, `npx prisma generate` and `npm run db:status`.
+Run mutating runtime suites sequentially with disposable fixture authorization;
+they verify cleanup and unchanged fingerprints of pre-existing business tables.
+`STEP22_DISPOSABLE_APPROVED=1 npm run test:email:runtime` adds real Neon metadata,
+permission, rate-limit, failure, rotation and a browser flow whose invitation URL
+comes from an in-memory mocked email. It creates no real external email. The
+Step 21 browser suite covers failure Copy Link, reissue/revoke, role permissions,
+accept/decline, keyboard/dialogs and layouts at desktop/390px/320px. On Windows,
+set the authorization variable in PowerShell before running the command.
+
+No real email has been sent during Step 22 implementation or automated validation.
+The domain, Render secret configuration and explicitly approved inbox test remain
+manual deployment tasks. Step 23 is outside this change.
+
+Step 22 verification result: all 134 unit tests (including 20 email tests), all 15
+legacy runtime suites (197 scenario groups), the Step 22 Neon/mock-email runtime,
+reminder runtime/read-only checks and post-event runtime passed. Browser checks:
+20 Step 21, 7 Step 22 and 14 post-event checks passed. Typecheck, lint, build,
+Prisma validation/generation/migration/status and Git whitespace checks passed.
+Disposable data cleanup and unchanged existing business-table fingerprints were
+verified. No real external email was sent. The complete local 19-point delivery
+report and test evidence are saved under artifacts/step22/step-22-report.md.

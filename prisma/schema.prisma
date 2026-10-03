@@ -142,6 +142,12 @@ model OrganizationInvitation {
   acceptedAt     DateTime? @db.Timestamptz(3)
   declinedAt     DateTime? @db.Timestamptz(3)
   revokedAt      DateTime? @db.Timestamptz(3)
+  emailSentAt    DateTime? @db.Timestamptz(3)
+  emailProviderMessageId String?
+  emailLastAttemptAt DateTime? @db.Timestamptz(3)
+  emailSendAttempts Int @default(0)
+  // Only an application-owned category; never a raw provider error/response.
+  emailFailureCategory String?
   createdAt      DateTime @default(now()) @db.Timestamptz(3)
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   invitedBy      User? @relation(fields: [invitedById], references: [id], onDelete: SetNull)

@@ -3,9 +3,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/features/auth/server/session";
 import { getDb } from "@/lib/db";
-import { getPublicAppUrl } from "@/lib/public-url-server";
+import { createAndEmailInvitation } from "./delivery";
 import { allowTeamRequest } from "./rate-limit";
-import { changeTeamRole, inviteTeamMember, removeTeamMember, respondToInvitation, revokeTeamInvitation, TeamError } from "./service";
+import { changeTeamRole, removeTeamMember, respondToInvitation, revokeTeamInvitation, TeamError } from "./service";
 import type { TeamActionState } from "./types";
 
 export async function manageOrganizationTeam(slug: string, _previous: TeamActionState, form: FormData): Promise<TeamActionState> {
@@ -14,17 +14,10 @@ export async function manageOrganizationTeam(slug: string, _previous: TeamAction
   const db = getDb();
   const operation = form.get("operation"), id = String(form.get("id") ?? ""), expectedRole = String(form.get("expectedRole") ?? "");
   let left = false;
-  let link: string | undefined;
+  let invitationResult: TeamActionState | undefined;
   try {
     if (operation === "invite" || operation === "reissue") {
-      if (!await allowTeamRequest(db, user.id, "invite")) return { message: "Too many invitations. Please try again in an hour." };
-      // Resolve the public origin before writing, so configuration errors cannot
-      // leave an invitation whose one-time link was never delivered to its creator.
-      const base = getPublicAppUrl();
-      const prior = operation === "reissue" ? await db.organizationInvitation.findFirst({ where: { id, organization: { slug, members: { some: { userId: user.id, role: { in: ["OWNER", "ADMIN"] } } } } }, select: { email: true, role: true } }) : null;
-      if (operation === "reissue" && !prior) throw new TeamError("This invitation is unavailable.");
-      const issued = await inviteTeamMember(db, user.id, slug, prior ?? { email: form.get("email"), role: form.get("role") }, operation === "reissue" ? id : undefined);
-      link = new URL(`/invitations/${issued.token}`, base).href;
+      invitationResult = await createAndEmailInvitation(db, user.id, slug, { email: form.get("email"), role: form.get("role") }, operation === "reissue" ? id : undefined);
     } else if (operation === "revoke") await revokeTeamInvitation(db, user.id, slug, id);
     else if (operation === "role") await changeTeamRole(db, user.id, slug, id, expectedRole, form.get("role"));
     else if (operation === "remove" || operation === "leave") left = (await removeTeamMember(db, user.id, slug, operation === "leave" ? undefined : id, expectedRole)).left;
@@ -33,7 +26,7 @@ export async function manageOrganizationTeam(slug: string, _previous: TeamAction
   revalidatePath("/organizer", "layout");
   revalidatePath("/dashboard");
   if (left) redirect("/organizer");
-  return { ok: true, message: link ? "Invitation ready. Copy this link now; it is only shown once. No email has been sent." : "Team updated.", ...(link ? { link } : {}) };
+  return invitationResult ?? { ok: true, message: "Team updated." };
 }
 
 export async function answerOrganizationInvitation(token: string, _previous: TeamActionState, form: FormData): Promise<TeamActionState> {

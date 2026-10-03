@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "test:email": "node --test tests/transactional-email.test.mjs",
+    "test:email:runtime": "node --import ./tests/support/mock-resend.mjs tests/transactional-email-runtime.mjs",
     "test:team": "node --test tests/organization-team.test.mjs",
     "test:team:runtime": "node tests/organization-team-runtime.mjs",
     "reminders:run": "node scripts/run-reminders.mjs",
@@ -62,6 +64,7 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-hook-form": "^7.89.0",
+    "resend": "6.32.0",
     "server-only": "0.0.1",
     "tailwind-merge": "^3.7.0",
     "zod": "^4.6.5"

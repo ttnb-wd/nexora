@@ -25,11 +25,11 @@ async function fingerprint(){const tables=await db.$queryRaw`SELECT tablename FR
 async function request(path,actor,options={}){return fetch(origin+path,{redirect:'manual',...options,headers:{Origin:origin,'X-Forwarded-For':`${ip}${actor?.index??99}::1`,...(actor?.cookie?{Cookie:actor.cookie}:{}),...options.headers},signal:AbortSignal.timeout(65000)});}
 async function signup(label){const email=`${prefix}-${label}@example.test`,password=randomBytes(24).toString('hex'),index=actors.length+1;const res=await request('/api/auth/sign-up/email',{index},{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:`Step21 ${label}`,email,password})});assert.equal(res.status,200);const{user}=await res.json();users.push(user.id);const cookie=res.headers.getSetCookie().map(x=>x.split(';')[0]).join('; ');const actor={id:user.id,name:user.name,email,password,index,cookie};actors.push(actor);secrets.push(password,cookie);return actor;}
 async function invoke(name,args,actor,path='/dashboard'){const manifest=JSON.parse(readFileSync('.next/server/server-reference-manifest.json','utf8'));const entry=Object.entries(manifest.node).find(([,value])=>value.exportedName===name);assert.ok(entry);const payload=await rscClient.encodeReply(args);const res=await request(path,actor,{method:'POST',headers:{'Next-Action':entry[0],...(typeof payload==='string'?{'Content-Type':'text/plain;charset=UTF-8'}:{})},body:payload});assert.equal(res.status,200);const text=await res.text();const result=text.split('\n').map(line=>{try{return JSON.parse(line.slice(line.indexOf(':')+1));}catch{return null;}}).find(x=>x&&typeof x.message==='string');assert.ok(result);return result;}
-async function child(args,input,env={}){return new Promise((done,reject)=>{const proc=spawn(process.execPath,args,{windowsHide:true,env:{...process.env,APP_URL:origin,PUBLIC_APP_URL:' ',...env}});let stdout='',stderr='';proc.stdout.on('data',x=>stdout+=x);proc.stderr.on('data',x=>stderr+=x);proc.on('error',reject);proc.on('close',code=>done({code,stdout,stderr}));if(input)proc.stdin.end(JSON.stringify(input));});}
+async function child(args,input,env={}){return new Promise((done,reject)=>{const proc=spawn(process.execPath,args,{windowsHide:true,env:{...process.env,APP_URL:origin,PUBLIC_APP_URL:'https://nexora-runtime.invalid',RESEND_API_KEY:'',...env}});let stdout='',stderr='';proc.stdout.on('data',x=>stdout+=x);proc.stderr.on('data',x=>stderr+=x);proc.on('error',reject);proc.on('close',code=>done({code,stdout,stderr}));if(input)proc.stdin.end(JSON.stringify(input));});}
 const form=fields=>{const f=new FormData();for(const[k,v]of Object.entries(fields))f.set(k,v);return f;};
 try{
  baseline=await fingerprint();ledger.baseline=baseline;save();
- server=spawn(process.execPath,['node_modules/next/dist/bin/next','start','--hostname','127.0.0.1','--port','3004'],{windowsHide:true,env:{...process.env,APP_URL:origin,PUBLIC_APP_URL:' ',NODE_ENV:'production'}});server.stdout.on('data',x=>serverLogs+=x);server.stderr.on('data',x=>serverLogs+=x);
+ server=spawn(process.execPath,['--import','./tests/support/mock-resend.mjs','node_modules/next/dist/bin/next','start','--hostname','127.0.0.1','--port','3004'],{windowsHide:true,env:{...process.env,APP_URL:origin,PUBLIC_APP_URL:'https://nexora-runtime.invalid',RESEND_API_KEY:'',NODE_ENV:'production'}});server.stdout.on('data',x=>serverLogs+=x);server.stderr.on('data',x=>serverLogs+=x);
  for(let i=0;i<80;i++){if(server.exitCode!==null)throw new Error('Test server failed');try{if((await request('/sign-in')).status===200)break;}catch{}await sleep(250);}
  const owner=await signup('owner'),admin=await signup('admin'),editor=await signup('editor'),member=await signup('member'),invited=await signup('invited'),decliner=await signup('decliner'),outsider=await signup('outsider'),browserInvitee=await signup('browser-invitee');
  const org=await db.organization.create({data:{name:'Step21 disposable organization',slug:prefix}});orgs.push(org.id);
@@ -107,7 +107,7 @@ try{
   const result=await child(['tests/organization-team-browser.mjs'],{origin,root,slug:org.slug,emptySlug:emptyOrg.slug,ip,owner,admin,editor,member,invited:browserInvitee,decliner,token:browserToken,declineToken:browserDecline});writeFileSync(`${root}/browser.log`,result.stdout+'\n'+result.stderr);assert.equal(result.code,0,'Browser suite failed; see browser report');console.log(result.stdout.trim());pass('desktop/mobile browser suite complete');
  }
  if(process.argv.includes('--regression')){
-  const suites=[['tests/all-runtime-suite.mjs'],['tests/post-event-runtime.mjs'],['tests/reminder-scheduler-runtime.mjs']];
+  const suites=[['tests/all-runtime-suite.mjs',...(process.env.NEXORA_RUNTIME_SUITES?.split(',').filter(Boolean)??[])],['tests/post-event-runtime.mjs'],['tests/reminder-scheduler-runtime.mjs']];
   for(const args of suites){const result=await child(args,null,{NEXORA_DISPOSABLE_APPROVED:'1',STEP20_DISPOSABLE_APPROVED:'1',STEP20_SKIP_BROWSER:'1',STEP18_DISPOSABLE_APPROVED:'1'});writeFileSync(`${root}/${args[0].split('/').pop()}.log`,result.stdout+'\n'+result.stderr);assert.equal(result.code,0,'Existing runtime regression failed: '+args[0]);pass('existing runtime regression: '+args[0]);}
  }
  ledger.ok=true;
@@ -115,7 +115,9 @@ try{
 finally{
  if(chrome&&chrome.exitCode===null){chrome.kill();await Promise.race([new Promise(r=>chrome.once('exit',r)),sleep(3000)]);}if(server&&server.exitCode===null){server.kill();await Promise.race([new Promise(r=>server.once('exit',r)),sleep(3000)]);}
  try{
-  const invitationHashes=new Set((await db.organizationInvitation.findMany({where:{organizationId:{in:orgs}},select:{tokenHash:true}})).map(row=>row.tokenHash));
+  const invitationRows=await db.organizationInvitation.findMany({where:{organizationId:{in:orgs}},select:{tokenHash:true,email:true,organizationId:true}});
+  const invitationHashes=new Set(invitationRows.map(row=>row.tokenHash));
+  await db.rateLimit.deleteMany({where:{key:{in:[...orgs.map(id=>'team:email-org:'+hashInvitationToken(id)),...invitationRows.map(row=>'team:email-recipient:'+hashInvitationToken(JSON.stringify([row.organizationId,row.email]))) ]}}});
   assert.ok(![...serverLogs.matchAll(/[A-Za-z0-9_-]{43}/g)].some(match=>invitationHashes.has(hashInvitationToken(match[0]))),'Raw invitation credential in application logs');
   const recovered=await db.user.findMany({where:{email:{startsWith:prefix}},select:{id:true}});for(const row of recovered)if(!users.includes(row.id))users.push(row.id);
   await db.event.deleteMany({where:{slug:{startsWith:prefix}}});await db.organization.deleteMany({where:{id:{in:orgs}}});await db.user.deleteMany({where:{id:{in:users}}});

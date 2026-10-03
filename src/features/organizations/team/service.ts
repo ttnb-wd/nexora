@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { Prisma, PrismaClient } from "../../../generated/prisma/client";
 import { allowedTeamRoles, canInviteMember, canLeaveOrganization, canManageMemberRole, canRemoveMember, canRevokeInvitation, invitationRoles } from "./policy";
 import { hashInvitationToken, newInvitationToken, normalizeTeamEmail, validInvitationToken } from "./token";
+import { allowTeamRequest } from "./rate-limit";
 
 export class TeamError extends Error {}
 const deny = () => { throw new TeamError("You do not have permission to perform this team action."); };
@@ -16,11 +17,11 @@ async function lockOrganization(tx: Tx, id: string) {
   const rows = await tx.$queryRaw<{ id: string }[]>`SELECT "id" FROM "Organization" WHERE "id" = ${id} FOR UPDATE`;
   if (!rows.length) deny();
 }
-async function databaseNow(tx: Tx) {
+export async function databaseNow(tx: Tx) {
   const [row] = await tx.$queryRaw<{ now: Date }[]>`SELECT clock_timestamp() AS now`;
   return row.now;
 }
-async function withTeam<T>(db: PrismaClient, actorId: string, slug: string, work: (tx: Tx, access: { organizationId: string; role: "OWNER" | "ADMIN" | "EDITOR" | "MEMBER" }) => Promise<T>) {
+export async function withTeam<T>(db: PrismaClient, actorId: string, slug: string, work: (tx: Tx, access: { organizationId: string; role: "OWNER" | "ADMIN" | "EDITOR" | "MEMBER" }) => Promise<T>) {
   return db.$transaction(async tx => {
     const org = await tx.organization.findUnique({ where: { slug }, select: { id: true } });
     if (!org) return deny();
@@ -31,7 +32,7 @@ async function withTeam<T>(db: PrismaClient, actorId: string, slug: string, work
   }, { timeout: 30000 });
 }
 
-export async function inviteTeamMember(db: PrismaClient, actorId: string, slug: string, input: unknown, replaceId?: string) {
+export async function inviteTeamMember(db: PrismaClient, actorId: string, slug: string, input: unknown, replaceId?: string, emailDelivery = false) {
   const parsed = inviteSchema.safeParse(input);
   if (!parsed.success) throw new TeamError("Enter a valid email and an allowed role.");
   return withTeam(db, actorId, slug, async (tx, access) => {
@@ -40,15 +41,18 @@ export async function inviteTeamMember(db: PrismaClient, actorId: string, slug: 
     if (replaceId) {
       const previous = await tx.organizationInvitation.findFirst({ where: { id: replaceId, organizationId: access.organizationId } });
       if (!previous || previous.acceptedAt || previous.declinedAt || previous.revokedAt || previous.email !== parsed.data.email || !canRevokeInvitation(access.role, previous.role)) return deny();
+      if (previous.expiresAt <= now) throw new TeamError("This invitation has expired. Create a new invitation instead.");
+      if (emailDelivery && now.getTime() - previous.createdAt.getTime() < 60000) throw new TeamError("Please wait one minute before reissuing this invitation.");
       await tx.organizationInvitation.update({ where: { id: previous.id }, data: { revokedAt: now } });
     }
     const existingMember = await tx.organizationMember.findFirst({ where: { organizationId: access.organizationId, user: { email: { equals: parsed.data.email, mode: "insensitive" } } } });
     if (existingMember) throw new TeamError("This person is already a member of this organization.");
     await tx.organizationInvitation.updateMany({ where: { organizationId: access.organizationId, email: parsed.data.email, ...open, expiresAt: { lte: now } }, data: { revokedAt: now } });
     if (await tx.organizationInvitation.findFirst({ where: { organizationId: access.organizationId, email: parsed.data.email, ...open } })) throw new TeamError("An active invitation already exists for this email.");
+    if (emailDelivery && (!await allowTeamRequest(tx, access.organizationId, "email-org") || !await allowTeamRequest(tx, JSON.stringify([access.organizationId, normalizeTeamEmail(parsed.data.email)]), "email-recipient"))) throw new TeamError("Too many invitation emails. Please try again in an hour.");
     const { token, tokenHash } = newInvitationToken();
-    await tx.organizationInvitation.create({ data: { ...parsed.data, organizationId: access.organizationId, invitedById: actorId, tokenHash, expiresAt: new Date(now.getTime() + 7 * 86400000) } });
-    return { token };
+    const invitation = await tx.organizationInvitation.create({ data: { ...parsed.data, organizationId: access.organizationId, invitedById: actorId, tokenHash, expiresAt: new Date(now.getTime() + 7 * 86400000) } });
+    return { token, id: invitation.id };
   });
 }
 

@@ -1,0 +1,24 @@
+import assert from 'node:assert/strict';
+import {readFileSync,writeFileSync} from 'node:fs';
+const fixture=JSON.parse(readFileSync(0,'utf8'));
+const targets=await(await fetch('http://127.0.0.1:9338/json/list')).json();const socket=new WebSocket(targets.find(x=>x.type==='page').webSocketDebuggerUrl);
+await new Promise((r,j)=>{socket.onopen=r;socket.onerror=j;});let id=0;const pending=new Map();
+socket.onmessage=event=>{const data=JSON.parse(event.data);if(data.id){const p=pending.get(data.id);pending.delete(data.id);if(!p)return;if(data.error)p.reject(new Error(data.error.message));else p.resolve(data.result);}};
+function send(method,params={}){return new Promise((r,j)=>{const key=++id;pending.set(key,{resolve:r,reject:j});socket.send(JSON.stringify({id:key,method,params}));});}
+async function evaluate(expression){const r=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(r.exceptionDetails)throw new Error('Browser evaluation failed');return r.result.value;}
+async function until(expression){const deadline=Date.now()+35000;while(Date.now()<deadline){try{if(await evaluate(expression))return;}catch{}await new Promise(r=>setTimeout(r,150));}throw new Error('Browser condition timed out');}
+async function go(path){await send('Page.navigate',{url:fixture.origin+path});await until(`document.readyState==='complete'&&location.pathname===${JSON.stringify(path.split('?')[0])}&&!!document.querySelector('main')`);await new Promise(r=>setTimeout(r,600));}
+async function click(selector){await evaluate(`document.querySelector(${JSON.stringify(selector)}).scrollIntoView({block:'center',behavior:'instant'})`);const point=await evaluate(`(()=>{const r=document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2}})()`);await send('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,...point});await send('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,...point});}
+async function type(selector,value){await click(selector);await send('Input.insertText',{text:value});}
+async function login(actor){await send('Network.clearBrowserCookies');if(actor)for(const pair of actor.cookie.split('; ')){const at=pair.indexOf('=');await send('Network.setCookie',{name:pair.slice(0,at),value:pair.slice(at+1),url:fixture.origin});}}
+const report={passed:[]};const pass=label=>{report.passed.push(label);console.log('PASS '+label);};const main=`document.querySelector('main').textContent`;
+await send('Page.enable');await send('Network.enable');await send('Network.setExtraHTTPHeaders',{headers:{'X-Forwarded-For':fixture.ip+'98::1'}});
+try{
+
+ await login(fixture.owner);await go(`/organizer/${fixture.slug}/team`);assert.ok((await evaluate(main)).includes('EDITOR · Sent'));assert.equal(await evaluate(`document.querySelectorAll('input[aria-label="Invitation link"]').length`),0);pass('Owner sees Sent and no raw link/provider identifier after successful delivery');
+ for(const width of [1440,390,320]){await send('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:width<500});await go(`/organizer/${fixture.slug}/team`);assert.ok(await evaluate(`document.documentElement.scrollWidth<=innerWidth`));await login(null);await go('/invitations/'+fixture.token);assert.ok((await evaluate(main)).includes('Sign in to accept invitation'));assert.ok(!(await evaluate(main)).includes(fixture.recipient.email));assert.ok(await evaluate(`document.documentElement.scrollWidth<=innerWidth`));await login(fixture.owner);pass(`Team and emailed invitation privacy/layout at ${width}px`);}
+ await login(null);await go('/invitations/'+fixture.token);await click('a[href^="/sign-in?returnTo="]');await until(`location.pathname==='/sign-in'`);assert.equal(await evaluate(`new URL(location.href).searchParams.get('returnTo')`),'/invitations/'+fixture.token);await type('#auth-email',fixture.recipient.email);await type('#auth-password',fixture.recipient.password);await click('button[type="submit"]');await until(`location.pathname.startsWith('/invitations/')&&${main}.includes('Accept invitation')`);pass('Mock-emailed invitation survives real anonymous sign-in return path');
+ await click('button[value="accept"]');await until(`${main}.includes('Invitation accepted')`);await click(`a[href="/organizer/${fixture.slug}"]`);await until(`location.pathname==='/organizer/${fixture.slug}'`);pass('Recipient accepts emailed invitation and reaches organization');
+ await login(fixture.owner);await go(`/organizer/${fixture.slug}/team`);assert.ok((await evaluate(main)).includes('EDITOR · Accepted'));pass('Owner sees Accepted after recipient joins');report.ok=true;
+}catch(error){report.ok=false;report.failure=error.message;throw error;}
+finally{writeFileSync(`${fixture.root}/browser-results.json`,JSON.stringify(report,null,2));socket.close();}
