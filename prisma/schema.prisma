@@ -40,6 +40,8 @@ model User {
   accounts      Account[]
   memberships   OrganizationMember[]
   createdEvents Event[]
+  registrations EventRegistration[]
+  bookmarks     EventBookmark[]
 }
 
 model Session {
@@ -156,7 +158,46 @@ model Event {
   creator              User          @relation(fields: [creatorId], references: [id], onDelete: Restrict)
   organization         Organization? @relation(fields: [organizationId], references: [id], onDelete: Restrict)
 
+  registrations        EventRegistration[]
+  bookmarks            EventBookmark[]
+
   @@index([creatorId])
   @@index([organizationId, startAt])
   @@index([status, startAt])
+}
+
+enum RegistrationStatus {
+  REGISTERED
+  WAITLISTED
+  CANCELLED
+  ATTENDED
+  NO_SHOW
+}
+
+model EventRegistration {
+  id        String             @id @default(cuid())
+  userId    String
+  eventId   String
+  status    RegistrationStatus @default(REGISTERED)
+  createdAt DateTime           @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime           @updatedAt @db.Timestamptz(3)
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event     Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, eventId])
+  @@index([eventId, status])
+  @@index([userId, status])
+}
+
+model EventBookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  eventId   String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, eventId])
+  @@index([eventId])
+  @@index([userId, createdAt])
 }

@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState, type ReactNode } from "react";
+import { useRef, useState, useTransition, type ReactNode } from "react";
 import { motion, useReducedMotion, useScroll } from "motion/react";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
@@ -15,17 +15,35 @@ import { EventVenue } from "./event-venue";
 import { EventOrganizer } from "./event-organizer";
 import { EventResources } from "./event-resources";
 import { EventActionButtons } from "./event-action-buttons";
+import { useRouter } from "next/navigation";
+import { joinEvent, cancelEventRegistration } from "@/features/participation/server/actions";
+import { useEventBookmark } from "@/features/participation/components/bookmark-provider";
+import { eventSignInPath, type Availability, type ViewerParticipation } from "@/features/participation/rules";
 import styles from "./event-detail.module.css";
 function DetailSection({ title, index, children }: { title: string; index: number; children: ReactNode }) {
   return <section id={title.toLowerCase()} aria-labelledby={`${title.toLowerCase()}-title`} className={styles.section}><FadeUp distance={14} duration={.45}><header className={styles.sectionHeading}><span aria-hidden="true">{String(index).padStart(2, "0")}</span><h2 id={`${title.toLowerCase()}-title`}>{title}</h2></header>{children}</FadeUp></section>;
 }
-export function EventDetailExperience({ event, related }: { event: Event; related: Event[] }) {
-  const [joined, setJoined] = useState(false);
-  const [saved, setSaved] = useState(false);
+export function EventDetailExperience({ event, related, participation }: { event: Event; related: Event[]; participation: { viewer: ViewerParticipation; availability: Availability } }) {
+  const joined = participation.viewer.joined;
+  const bookmark = useEventBookmark(event.slug);
+  const [pending, startTransition] = useTransition();
+  const [message, setMessage] = useState("");
+  const router = useRouter();
+  function changeRegistration(cancel: boolean) {
+    if (!participation.viewer.authenticated) { router.push(eventSignInPath(event.slug)); return; }
+    startTransition(async () => {
+      try {
+        const result = await (cancel ? cancelEventRegistration(event.slug) : joinEvent(event.slug));
+        if (result.signIn) { router.push(result.signIn); return; }
+        setMessage(result.message);
+        router.refresh();
+      } catch { setMessage("We could not update your registration. Please try again."); }
+    });
+  }
   const page = useRef<HTMLElement>(null);
   const reduced = useReducedMotion();
   const { scrollYProgress } = useScroll({ target: page, offset: ["start start", "end end"] });
-  const interactions = { event, joined, saved, onJoin: () => setJoined((value) => !value), onSave: () => setSaved((value) => !value) };
+  const interactions = { event, joined, saved: bookmark.saved, pending: pending || bookmark.pending, message: message || bookmark.message, availability: participation.availability, onJoin: () => changeRegistration(false), onCancel: () => changeRegistration(true), onSave: bookmark.toggle };
   const showResources = event.source !== "database" || event.details.resources.length > 0;
   const sections = ["About", ...(event.details.agenda.length ? ["Agenda"] : []), ...(event.details.speakers.length ? ["Speakers"] : []), "Venue", "Organizer", ...(showResources ? ["Resources"] : [])];
   return <main id="main-content" tabIndex={-1} ref={page} className={styles.page} data-event-detail>
@@ -42,6 +60,6 @@ export function EventDetailExperience({ event, related }: { event: Event; relate
       </div><EventRegistrationPanel {...interactions} /></div>
       {related.length > 0 && <section aria-labelledby="related-title" className={styles.related}><FadeUp><header className={styles.relatedHeader}><div><p className={styles.eyebrow}>KEEP THE CURIOSITY GOING</p><h2 id="related-title">More in your orbit<span>.</span></h2></div><Link href="/explore">Explore all events <ArrowUpRight size={17} aria-hidden="true" /></Link></header></FadeUp><div className={styles.relatedGrid}>{related.map((candidate, index) => <FadeUp key={candidate.id} delay={index * .06}><EventCard event={candidate} /></FadeUp>)}</div></section>}
     </Container>
-    <div className={styles.mobileJoin}><div><strong>{event.status === "completed" ? "Completed event" : joined ? "Joined in this preview" : "Your next moment"}</strong><small>{event.status === "completed" ? "This event has ended" : "Local UI preview · no registration"}</small></div><EventActionButtons {...interactions} /></div>
+    <div className={styles.mobileJoin}><div><strong>{event.status === "completed" ? "Completed event" : joined ? "Joined" : "Your next moment"}</strong><small>{event.status === "completed" ? "This event has ended" : participation.availability.closedReason ?? (joined ? "Your registration is saved to your account" : "Join or save this event")}</small></div><EventActionButtons {...interactions} hideCancel /></div>
   </main>;
 }

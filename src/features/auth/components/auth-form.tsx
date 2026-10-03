@@ -11,12 +11,13 @@ import { authClient } from "../client";
 import { authErrorMessage } from "../errors";
 import { signInSchema, signUpSchema } from "../schemas";
 import { buttonStyles } from "@/components/ui/button";
+import { eventReturnPath } from "@/features/participation/rules";
 import styles from "./auth.module.css";
 
 // Both modes share fields; only sign-up requires a name.
 const signInFormSchema = signInSchema.extend({ name: z.string() });
 type AuthFields = z.infer<typeof signUpSchema>;
-export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
+export function AuthForm({ mode, returnTo = "/dashboard" }: { mode: "sign-in" | "sign-up"; returnTo?: string }) {
   const signup = mode === "sign-up";
   const router = useRouter();
   const [visible, setVisible] = useState(false);
@@ -30,8 +31,8 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
     try {
       const result = signup ? await authClient.signUp.email(values) : await authClient.signIn.email({ email: values.email, password: values.password });
       if (result.error) { setError(authErrorMessage(result.error)); return; }
-      // Fixed internal destination: client-supplied callback/return URLs are never used.
-      router.replace("/dashboard");
+      // Only a validated internal event path or the dashboard is allowed.
+      router.replace(eventReturnPath(returnTo));
       router.refresh();
     } catch { setError(authErrorMessage(null)); }
   }

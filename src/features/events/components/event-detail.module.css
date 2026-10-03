@@ -17,11 +17,11 @@
 .heroVisual { position: relative; min-width: 0; border: 1px solid #dce9e5; border-radius: 1.7rem; padding: .65rem; background: #ffffffa0; transform: rotate(1.5deg); box-shadow: 0 24px 50px -30px #46606560; }
 .cover { min-height: 36rem; border-radius: 1.2rem; }
 .visualFoot { display: flex; justify-content: space-between; gap: .8rem; padding: .9rem .5rem .25rem; font-size: .5rem; font-weight: 650; letter-spacing: .1em; color: #596b74; }
-.actionButtons { display: flex; gap: .65rem; align-items: center; }
+.actionButtons { display: flex; flex-wrap: wrap; gap: .65rem; align-items: center; }
 .join, .save { display: inline-flex; align-items: center; justify-content: center; gap: .65rem; min-height: 3.1rem; border-radius: .75rem; padding: .75rem 1.1rem; font-size: .83rem; font-weight: 600; cursor: pointer; transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease; }
 .join { background: #224b54; color: #fff; border: 1px solid #224b54; min-width: 10rem; box-shadow: 0 8px 20px -10px #224b5480; }
 .join[aria-pressed="true"] { background: #e3f1ec; color: #23594c; border-color: #b9d7ca; box-shadow: none; }
-.join:disabled { background: #e9edf0; color: #606976; border-color: #d9dfe5; box-shadow: none; cursor: default; }
+.join:disabled:not([aria-pressed="true"]) { background: #e9edf0; color: #606976; border-color: #d9dfe5; box-shadow: none; cursor: default; }
 .save { background: #ffffffb0; color: #46626a; border: 1px solid #ccdce0; }
 .save[aria-pressed="true"] { background: #dfefed; color: #205d65; border-color: #a6cfca; }
 .confirmation { min-height: 2.9rem; font-size: .68rem; line-height: 1.6; color: #526e70; max-width: 30rem; margin-top: .8rem; }

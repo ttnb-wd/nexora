@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { EventArtwork } from "@/features/events/components/event-artwork";
-import { useState } from "react";
+import { useEventBookmark } from "@/features/participation/components/bookmark-provider";
 import { ArrowUpRight, Bookmark, CalendarDays, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Event, EventCardVariant } from "@/features/events/types";
@@ -12,8 +12,8 @@ export type EventCardProps = { event: Event; variant?: EventCardVariant; saved?:
 export function EventCard({ event, variant = "standard", saved, onSave, decorative = false }: EventCardProps) {
   const organization = event.organizer;
   const organizerLink = organization?.slug ? `/companies/${organization.slug}` : null;
-  const [localSaved, setLocalSaved] = useState(false);
-  const isSaved = saved ?? localSaved;
+  const bookmark = useEventBookmark(event.slug, event.source !== "database");
+  const isSaved = saved ?? bookmark.saved;
   const date = new Date(`${event.date}T12:00:00Z`);
   const day = date.getUTCDate();
   const month = date.toLocaleDateString("en", { month: "short", timeZone: "UTC" });
@@ -29,9 +29,10 @@ export function EventCard({ event, variant = "standard", saved, onSave, decorati
         <p className={styles.meta}><MapPin aria-hidden="true" /><span>{event.location.venue} · {event.location.city}</span></p>
         <p className={styles.organizer}>By {organizerLink && !decorative ? <Link href={organizerLink}>{organization?.name}</Link> : <strong>{organization?.name ?? "Nexora community"}</strong>}</p>
         {!decorative && <div className={styles.actions}>
-          <div className={styles.cardNavigation}><Link href={`/events/${event.slug}`} className={styles.eventLink} aria-label={`${event.status === "completed" ? "Revisit" : "Explore"} ${event.title}`}>{event.status === "completed" ? "Revisit event" : "Explore event"} <ArrowUpRight aria-hidden="true" /></Link>{event.status === "completed" && event.details.resources.length > 0 && <Link className={styles.archiveLink} href={`/events/${event.slug}#resources`}>Preview event resources</Link>}<details className={styles.details}><summary>Quick preview</summary><div className={styles.preview}><strong>A little more about this moment</strong><p>{event.description ?? `Join ${organization?.name ?? "the community"} for ${event.title}.`}</p><small>Registration is not available yet.</small></div></details></div>
-          <button type="button" className={styles.save} aria-label={`${isSaved ? "Unsave" : "Save"} ${event.title}`} aria-pressed={isSaved} onClick={onSave ?? (() => setLocalSaved(!localSaved))}><Bookmark size={18} aria-hidden="true" fill={isSaved ? "currentColor" : "none"} /></button>
+          <div className={styles.cardNavigation}><Link href={`/events/${event.slug}`} className={styles.eventLink} aria-label={`${event.status === "completed" ? "Revisit" : "Explore"} ${event.title}`}>{event.status === "completed" ? "Revisit event" : "Explore event"} <ArrowUpRight aria-hidden="true" /></Link>{event.status === "completed" && event.details.resources.length > 0 && <Link className={styles.archiveLink} href={`/events/${event.slug}#resources`}>Preview event resources</Link>}<details className={styles.details}><summary>Quick preview</summary><div className={styles.preview}><strong>A little more about this moment</strong><p>{event.description ?? `Join ${organization?.name ?? "the community"} for ${event.title}.`}</p><small>{event.status === "completed" ? "This event has ended." : "View event details to register."}</small></div></details></div>
+          <button type="button" className={styles.save} aria-label={`${isSaved ? "Unsave" : "Save"} ${event.title}`} aria-pressed={isSaved} disabled={bookmark.pending} onClick={onSave ?? bookmark.toggle}><Bookmark size={18} aria-hidden="true" fill={isSaved ? "currentColor" : "none"} /></button>
         </div>}
+        {bookmark.message && <p role="status" className={styles.time}>{bookmark.message}</p>}
       </div>
     </article>
   );

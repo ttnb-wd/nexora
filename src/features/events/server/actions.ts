@@ -20,6 +20,9 @@ function refreshEvent(path: string, organizationSlug?: string, eventSlug?: strin
   revalidatePath(path);
   revalidatePath(`${path}/edit`);
   revalidatePath("/dashboard/events");
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/joined");
+  revalidatePath("/dashboard/saved");
   if (organizationSlug) revalidatePath(`/organizer/${organizationSlug}/events`);
   revalidatePath("/");
   revalidatePath("/explore");

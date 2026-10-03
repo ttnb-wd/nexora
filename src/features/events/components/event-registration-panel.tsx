@@ -5,7 +5,7 @@ import { EventActionButtons, type EventInteractionProps } from "./event-action-b
 import { formatEventDate } from "../event-helpers";
 import styles from "./event-detail.module.css";
 export function EventRegistrationPanel(props: EventInteractionProps) {
-  const { event, joined } = props;
+  const { event, joined, availability, message } = props;
   const reduced = useReducedMotion();
   return <aside className={styles.registration} aria-labelledby="registration-title"><motion.div className={styles.registrationCard} whileHover={reduced === false ? { y: -2 } : undefined} transition={{ duration: .2 }}>
     <p className={styles.eyebrow}>YOUR NEXT MOMENT</p><h2 id="registration-title">{event.status === "completed" ? "A moment worth revisiting." : "Make room for something new."}</h2>
@@ -15,7 +15,7 @@ export function EventRegistrationPanel(props: EventInteractionProps) {
       <div><dt><MapPin aria-hidden="true" />Location</dt><dd>{event.location.venue}<br />{event.location.city}</dd></div>
       <div><dt><Radio aria-hidden="true" />Event type</dt><dd>{event.type}</dd></div>
     </dl>
-    <p className={styles.availability}><Check size={15} aria-hidden="true" />{joined ? "Joined in this demo" : event.details.availability}</p>
-    <EventActionButtons {...props} /><p className={styles.panelNote}>UI preview only. No account, booking, or registration record.</p>
+    <p className={styles.availability}><Check size={15} aria-hidden="true" />{joined ? `You are registered${availability.spotsLeft === null ? "" : ` · ${availability.spotsLeft} spots left`}` : availability.closedReason ?? (availability.spotsLeft === null ? "Registration open" : `${availability.spotsLeft} spots left`)}</p>
+    <EventActionButtons {...props} /><p className={styles.panelNote}>{message || "Manage your registration and saved events in your dashboard."}</p>
   </motion.div><p className={styles.panelCaption}>Great things happen when we show up.</p></aside>;
 }

@@ -5,7 +5,7 @@ import { EventActionButtons, type EventInteractionProps } from "./event-action-b
 import { formatEventDate } from "../event-helpers";
 import styles from "./event-detail.module.css";
 export function EventDetailHero(props: EventInteractionProps) {
-  const { event, joined } = props;
+  const { event, joined, message, availability } = props;
   const organization = event.organizer;
   const organizerLink = organization?.slug ? `/companies/${organization.slug}` : null;
   return <header className={styles.hero}>
@@ -16,7 +16,7 @@ export function EventDetailHero(props: EventInteractionProps) {
       <div className={styles.heroMeta}><p><CalendarDays aria-hidden="true" /><time dateTime={event.date}>{formatEventDate(event.date)}</time></p><p><Clock3 aria-hidden="true" />{event.time}</p><p><MapPin aria-hidden="true" />{event.location.venue} · {event.location.city}</p></div>
       <p className={styles.byline}>An experience by {organizerLink ? <Link href={organizerLink}>{organization?.name}</Link> : <strong>{organization?.name ?? "Nexora community"}</strong>}</p>
       <EventActionButtons {...props} />
-      <p className={styles.confirmation} id="join-status" role="status" aria-live="polite" aria-atomic="true">{joined ? "Joined in this preview. No registration was created. Click Joined to undo." : event.status === "completed" ? "This event has ended." : "Registration is not available yet. Joining and saving are local previews."}</p>
+      <p className={styles.confirmation} id="join-status" role="status" aria-live="polite" aria-atomic="true">{message || (joined ? "Your registration is saved. You can cancel it below." : availability.closedReason ?? "Join this event or save it for later.") }</p>
     </div><div className={styles.heroVisual}><EventArtwork event={event} size="hero" className={styles.cover} /><div className={styles.visualFoot}><span>COME CURIOUS. LEAVE INSPIRED.</span><span>NEXORA / {event.category.toUpperCase()}</span></div></div></div>
   </header>;
 }

@@ -21,7 +21,10 @@
     "test:events:public:runtime": "node tests/public-event-runtime.mjs",
     "test:events:public": "node --test tests/public-event-mapper.test.mjs",
     "test:organizations:public": "node --test tests/public-organization-queries.test.mjs",
-    "test:organizations:public:runtime": "node tests/public-organization-runtime.mjs"
+    "test:organizations:public:runtime": "node tests/public-organization-runtime.mjs",
+    "test:participation": "node --test tests/participation.test.mjs",
+    "test:participation:runtime": "node tests/participation-runtime.mjs",
+    "test:participation:readonly": "node tests/participation-readonly.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

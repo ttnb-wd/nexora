@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { getPublishedEventBySlug, getRelatedPublishedEvents } from "@/features/events/server/public-event-queries";
 import { EventDetailExperience } from "@/features/events/components/event-detail-experience";
 
+import { getEventParticipation } from "@/features/participation/server/service";
+
 type Props = { params: Promise<{ slug: string }> };
 export const dynamic = "force-dynamic";
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -24,5 +26,8 @@ export default async function EventDetailPage({ params }: Props) {
   let related: Awaited<ReturnType<typeof getRelatedPublishedEvents>> = [];
   try { related = await getRelatedPublishedEvents(event); }
   catch (error) { console.error("Related public events query failed", error); }
-  return <EventDetailExperience key={event.id} event={event} related={related} />;
+  let participation;
+  try { participation = await getEventParticipation(slug); }
+  catch { throw new Error("Event registration temporarily unavailable"); }
+  return <EventDetailExperience key={event.id} event={event} related={related} participation={participation} />;
 }

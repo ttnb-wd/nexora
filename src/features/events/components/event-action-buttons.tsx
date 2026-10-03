@@ -1,12 +1,14 @@
 "use client";
 import { Bookmark, Check, ArrowUpRight } from "lucide-react";
+import type { Availability } from "@/features/participation/rules";
 import type { Event } from "../types";
 import styles from "./event-detail.module.css";
-export interface EventInteractionProps { event: Event; joined: boolean; saved: boolean; onJoin: () => void; onSave: () => void }
-export function EventActionButtons({ event, joined, saved, onJoin, onSave }: EventInteractionProps) {
+export interface EventInteractionProps { event: Event; joined: boolean; saved: boolean; onJoin: () => void; onCancel: () => void; onSave: () => void; pending: boolean; availability: Availability; message: string }
+export function EventActionButtons({ event, joined, saved, onJoin, onCancel, onSave, pending, availability, hideCancel = false }: EventInteractionProps & { hideCancel?: boolean }) {
   const ended = event.status === "completed";
   return <div className={styles.actionButtons}>
-    <button type="button" className={styles.join} disabled={ended} aria-pressed={ended ? undefined : joined} aria-label={ended ? "Event ended" : `${joined ? "Undo demo join for" : "Join Event:"} ${event.title}`} onClick={onJoin}>{ended ? "Event ended" : joined ? "Joined" : "Join Event"}{!ended && (joined ? <Check size={18} aria-hidden="true" /> : <ArrowUpRight size={18} aria-hidden="true" />)}</button>
-    <button type="button" className={styles.save} aria-pressed={saved} aria-label={`${saved ? "Unsave" : "Save"} ${event.title}`} onClick={onSave}><Bookmark size={17} aria-hidden="true" fill={saved ? "currentColor" : "none"} /><span>{saved ? "Saved" : "Save"}</span></button>
+    <button type="button" className={styles.join} disabled={pending || (!joined && Boolean(availability.closedReason)) || joined} aria-pressed={ended ? undefined : joined} aria-label={ended ? "Event ended" : `${joined ? "Joined:" : "Join Event:"} ${event.title}`} onClick={onJoin}>{joined ? "Joined" : ended ? "Event ended" : availability.closedReason === "Registration is closed." ? "Registration closed" : availability.spotsLeft === 0 ? "Event full" : availability.closedReason ? "Registration closed" : "Join Event"}{!ended && (joined ? <Check size={18} aria-hidden="true" /> : <ArrowUpRight size={18} aria-hidden="true" />)}</button>
+    <button type="button" className={styles.save} aria-pressed={saved} aria-label={`${saved ? "Unsave" : "Save"} ${event.title}`} disabled={pending} onClick={onSave}><Bookmark size={17} aria-hidden="true" fill={saved ? "currentColor" : "none"} /><span>{saved ? "Saved" : "Save"}</span></button>
+    {joined && !hideCancel && <button type="button" className={styles.save} disabled={pending} onClick={onCancel} aria-label={`Cancel registration for ${event.title}`}>Cancel registration</button>}
   </div>;
 }
