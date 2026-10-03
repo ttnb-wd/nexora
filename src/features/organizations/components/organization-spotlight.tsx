@@ -8,8 +8,8 @@ import { cn } from "@/lib/utils";
 import shared from "./organizations.module.css";
 import styles from "./organizations-discovery.module.css";
 
-export function OrganizationSpotlight({ organization, upcomingCount, nextEvent, following, onToggleFollow }: {
-  organization: PublicOrganization; upcomingCount: number; nextEvent: PublicEvent | null; following: boolean; onToggleFollow: () => void;
+export function OrganizationSpotlight({ organization, upcomingCount, nextEvent }: {
+  organization: PublicOrganization; upcomingCount: number; nextEvent: PublicEvent | null;
 }) {
   const nextDate = nextEvent && new Date(`${nextEvent.date}T12:00:00Z`).toLocaleDateString("en", { month: "short", day: "numeric", timeZone: "UTC" });
   return <section aria-labelledby="trending-organization-title" className={cn(styles.spotlight, shared[organization.visualTheme])}>
@@ -29,7 +29,7 @@ export function OrganizationSpotlight({ organization, upcomingCount, nextEvent, 
       <ArrowRight size={18} aria-hidden="true" />
     </Link>}
     <div className={styles.spotlightActions}>
-      <OrganizationFollowButton name={organization.name} following={following} onToggle={onToggleFollow} />
+      <OrganizationFollowButton name={organization.name} slug={organization.slug} />
       <Link href={`/companies/${organization.slug}`}>View organization<ArrowUpRight size={16} aria-hidden="true" /></Link>
     </div>
   </section>;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { ArrowLeft, ArrowUpRight, MapPin, Globe, Sparkles } from "lucide-react";
@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { OrganizationVisual } from "./organization-visual";
 import { OrganizationFollowButton } from "./organization-follow-button";
 import { OrganizationCard } from "./organization-card";
+import { useOrganizationFollow } from "@/features/follows/components/follow-provider";
 import styles from "./organizations.module.css";
 
 const sectionLinks = [
@@ -36,7 +37,7 @@ function OrganizationEvents({ events, completed }: { events: Event[]; completed?
   </CompactEmpty>;
 }
 export function OrganizationProfile({ organization, upcoming, past, related }: { organization: PublicOrganization; upcoming: Event[]; past: Event[]; related: PublicOrganization[] }) {
-  const [following, setFollowing] = useState(false);
+  const { following } = useOrganizationFollow(organization.slug);
   const reduced = useReducedMotion();
   const visibleSections = sectionLinks.filter((section) => (section.id !== "about" || organization.description || organization.city || organization.region || organization.industry) && (section.id !== "contact" || organization.website));
   return <main id="main-content" tabIndex={-1} className={cn(styles.profile, styles[organization.visualTheme])}><Container>
@@ -48,10 +49,10 @@ export function OrganizationProfile({ organization, upcoming, past, related }: {
           <div className={styles.profileLabels}><span>{organization.industry}</span><span><MapPin size={13} aria-hidden="true" />{organization.city || organization.region || "Location not shared"}</span></div>
           <h1>{organization.name}</h1><p className={styles.heroDescription}>{organization.description}</p>
           <div className={styles.profileActions}>
-            <OrganizationFollowButton name={organization.name} following={following} onToggle={() => setFollowing((value) => !value)} />
+            <OrganizationFollowButton name={organization.name} slug={organization.slug} />
             {organization.website && <a href={organization.website} className={styles.websiteAction} aria-label={`Website for ${organization.name}`}><Globe size={15} aria-hidden="true" />Website <ArrowUpRight size={14} aria-hidden="true" /></a>}
           </div>
-          <p className={styles.followStatus} role="status" aria-live="polite" aria-atomic="true">{following ? `Following ${organization.name}. Resets when you leave this profile.` : "Follow along. Local preview, no account needed."}</p>
+          <p className={styles.followStatus} role="status" aria-live="polite" aria-atomic="true">{following ? `Following ${organization.name}. New event updates appear in your notifications.` : "Follow along for new event announcements."}</p>
         </div>
         <div className={styles.profileArtwork}>
           <motion.div className={styles.artworkMotion} initial={false} animate={reduced === false ? { y: [0, -5, 0] } : { y: 0 }} transition={{ duration: 8, repeat: reduced === false ? Infinity : 0, ease: "easeInOut" }}>

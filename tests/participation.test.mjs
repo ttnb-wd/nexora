@@ -13,11 +13,12 @@ registerHooks({resolve(specifier,context,nextResolve){
 const service=await import('../src/features/participation/server/service.ts');
 const rules=await import('../src/features/participation/rules.ts');
 function setup(overrides={}) {
- const event={id:'event-internal',status:'PUBLISHED',startAt:new Date('2090-01-01'),endAt:new Date('2090-01-02'),capacity:1,registrationDeadline:null,...overrides};
+ const event={id:'event-internal',title:'Real event',slug:'real-event',status:'PUBLISHED',startAt:new Date('2090-01-01'),endAt:new Date('2090-01-02'),capacity:1,registrationDeadline:null,...overrides};
  const registrations=new Map(),bookmarks=new Map(),calls=[];
  let release=Promise.resolve();
  const key=(where)=>`${where.userId}:${where.eventId}`;
  const tx={
+  notification:{create:async({data})=>data},
   $queryRaw:async(strings,...values)=>{calls.push({sql:strings.join('?'),values})},
   event:{findUnique:async()=>event},
   eventRegistration:{

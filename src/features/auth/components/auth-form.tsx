@@ -11,7 +11,7 @@ import { authClient } from "../client";
 import { authErrorMessage } from "../errors";
 import { signInSchema, signUpSchema } from "../schemas";
 import { buttonStyles } from "@/components/ui/button";
-import { eventReturnPath } from "@/features/participation/rules";
+import { safeReturnPath } from "@/features/auth/return-path";
 import styles from "./auth.module.css";
 
 // Both modes share fields; only sign-up requires a name.
@@ -31,8 +31,8 @@ export function AuthForm({ mode, returnTo = "/dashboard" }: { mode: "sign-in" | 
     try {
       const result = signup ? await authClient.signUp.email(values) : await authClient.signIn.email({ email: values.email, password: values.password });
       if (result.error) { setError(authErrorMessage(result.error)); return; }
-      // Only a validated internal event path or the dashboard is allowed.
-      router.replace(eventReturnPath(returnTo));
+      // Only an explicitly allowed internal return path is used.
+      router.replace(safeReturnPath(returnTo));
       router.refresh();
     } catch { setError(authErrorMessage(null)); }
   }

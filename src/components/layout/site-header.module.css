@@ -37,3 +37,8 @@
 @media (max-width: 540px) { .brand { font-size: 1.65rem; } .brand > span { width: 2rem; height: 2rem; } }
 .search { cursor: pointer; text-decoration: none; }
 .drawerSearch { text-decoration: none; }
+
+.bell { position: relative; display: inline-flex; align-items: center; justify-content: center; padding: .6rem; color: #5a4381; text-decoration: none; }
+.badge { position: absolute; top: 0; right: -.25rem; border-radius: 1rem; padding: .1rem .3rem; background: var(--brand-purple); color: white; font-size: .6rem; line-height: 1.2; }
+.mobileBell { display: none; }
+@media (max-width: 1023px) { .mobileBell { display: block; margin-left: auto; } }

@@ -11,6 +11,8 @@ import { createEventSchema, updateEventSchema, emptyEventValues, eventDataFromIn
 import { eventAccessWhere, eventManagerRoles, eventManagementPath, requireEventAccess } from "./authorization";
 import { eventToFormValues } from "./form-values";
 
+import { notifyEventPublished, notifyEventCancelled } from "@/features/notifications/server/creation";
+
 function fieldsFromForm(form: FormData) { return Object.fromEntries(Object.keys(emptyEventValues).map((key) => [key, form.get(key) ?? ""])); }
 function safeError(error: unknown): EventActionState {
   if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") return { errors: { slug: ["That event URL is already in use."] }, message: "Choose another event URL." };
@@ -24,7 +26,8 @@ function refreshEvent(path: string, organizationSlug?: string, eventSlug?: strin
   revalidatePath("/dashboard/joined");
   revalidatePath("/dashboard/saved");
   if (organizationSlug) revalidatePath(`/organizer/${organizationSlug}/events`);
-  revalidatePath("/");
+  revalidatePath("/", "layout");
+  revalidatePath("/dashboard/notifications");
   revalidatePath("/explore");
   revalidatePath("/companies");
   revalidatePath("/companies/[slug]", "page");
@@ -49,8 +52,10 @@ export async function createEvent(_previous: EventActionState, form: FormData): 
         const membership = await tx.organizationMember.findUnique({ where: { userId_organizationId: { userId: user.id, organizationId: result.data.organizationId } } });
         if (!membership || !eventManagerRoles.some((role) => role === membership.role)) return null;
       }
-      return tx.event.create({ data: { ...eventDataFromInput(result.data), creatorId: user.id, status: intent.data === "publish" ? "PUBLISHED" : "DRAFT" }, include: { organization: { select: { slug: true } } } });
-    });
+      const created = await tx.event.create({ data: { ...eventDataFromInput(result.data), creatorId: user.id, status: intent.data === "publish" ? "PUBLISHED" : "DRAFT" }, include: { organization: { select: { slug: true } } } });
+      if (created.status === "PUBLISHED") await notifyEventPublished(tx, created.id);
+      return created;
+    }, { maxWait: 10000, timeout: 15000 });
     if (!event) return { message: "You do not have permission to create events for this organization." };
     path = eventManagementPath(event);
     organizationSlug = event.organization?.slug;
@@ -90,8 +95,11 @@ export async function publishEvent(eventId: string, scope: string | null, _previ
   } catch { return { message: "This draft is not ready to publish. Edit it and complete all required details." }; }
   let count: number;
   try {
-    const updated = await getDb().event.updateMany({ where: { id: event.id, status: "DRAFT", updatedAt: event.updatedAt, AND: [eventAccessWhere(user.id)] }, data: { status: "PUBLISHED" } });
-    count = updated.count;
+    count = await getDb().$transaction(async (tx) => {
+      const updated = await tx.event.updateMany({ where: { id: event.id, status: "DRAFT", updatedAt: event.updatedAt, AND: [eventAccessWhere(user.id)] }, data: { status: "PUBLISHED" } });
+      if (updated.count) await notifyEventPublished(tx, event.id);
+      return updated.count;
+    }, { maxWait: 10000, timeout: 15000 });
   } catch { return { message: "We couldn’t publish this event. Please try again shortly." }; }
   if (!count) return { message: "This event changed or your access was removed. Reload it before publishing." };
   refreshEvent(eventManagementPath(event), event.organization?.slug, event.slug);
@@ -104,8 +112,11 @@ export async function cancelEvent(eventId: string, scope: string | null, _previo
   if (form.get("confirm") !== "yes") return { message: "Confirm that you want to cancel this event." };
   let count: number;
   try {
-    const updated = await getDb().event.updateMany({ where: { id: event.id, status: "PUBLISHED", updatedAt: event.updatedAt, AND: [eventAccessWhere(user.id)] }, data: { status: "CANCELLED" } });
-    count = updated.count;
+    count = await getDb().$transaction(async (tx) => {
+      const updated = await tx.event.updateMany({ where: { id: event.id, status: "PUBLISHED", updatedAt: event.updatedAt, AND: [eventAccessWhere(user.id)] }, data: { status: "CANCELLED" } });
+      if (updated.count) await notifyEventCancelled(tx, event.id);
+      return updated.count;
+    }, { maxWait: 10000, timeout: 15000 });
   } catch { return { message: "We couldn’t cancel this event. Please try again shortly." }; }
   if (!count) return { message: "This event changed or your access was removed. Reload it before cancelling." };
   refreshEvent(eventManagementPath(event), event.organization?.slug, event.slug);

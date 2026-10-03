@@ -5,7 +5,9 @@ import { requireEventAccess } from "@/features/events/server/authorization";
 import { mapPublicEvent, publicEventSelect } from "@/features/events/server/public-event-mapper";
 import { participationSlugSchema, eventSignInPath, registrationClosedReason, type ParticipationResult, type Availability } from "../rules";
 
-const eligibilitySelect = { id: true, status: true, startAt: true, endAt: true, capacity: true, registrationDeadline: true } as const;
+import { notifyRegistration } from "@/features/notifications/server/creation";
+
+const eligibilitySelect = { id: true, title: true, slug: true, status: true, startAt: true, endAt: true, capacity: true, registrationDeadline: true } as const;
 /** No client identity is accepted: every read/write derives identity from the session. */
 export async function mutateParticipation(input: unknown, kind: "join" | "cancel" | "save" | "unsave"): Promise<ParticipationResult> {
   const parsed = participationSlugSchema.safeParse(input);
@@ -27,7 +29,8 @@ export async function mutateParticipation(input: unknown, kind: "join" | "cancel
       }
       if (kind === "cancel") {
         // Own rows only; cancellation remains possible when the organizer cancels/archives.
-        await tx.eventRegistration.updateMany({ where: { userId: user.id, eventId: event.id, status: "REGISTERED" }, data: { status: "CANCELLED" } });
+        const cancelled = await tx.eventRegistration.updateMany({ where: { userId: user.id, eventId: event.id, status: "REGISTERED" }, data: { status: "CANCELLED" } });
+        if (cancelled.count) await notifyRegistration(tx, event, user.id, false);
         return { ok: true, message: "Registration cancelled." };
       }
       if (kind === "save") {
@@ -43,6 +46,7 @@ export async function mutateParticipation(input: unknown, kind: "join" | "cancel
       const count = await tx.eventRegistration.count({ where: { eventId: event.id, status: "REGISTERED" } });
       if (event.capacity !== null && count >= event.capacity) return { ok: false, message: "This event is full." };
       await tx.eventRegistration.upsert({ where, create: { userId: user.id, eventId: event.id, status: "REGISTERED" }, update: { status: "REGISTERED" } });
+      await notifyRegistration(tx, event, user.id, true);
       return { ok: true, message: "You are registered for this event." };
     }, { isolationLevel: "ReadCommitted", maxWait: 10000, timeout: 15000 });
   } catch { return { ok: false, message: "We could not update your event. Please try again shortly." }; }
