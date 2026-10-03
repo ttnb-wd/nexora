@@ -1,6 +1,6 @@
 import { mockEvents } from "@/features/events/data/mock-events";
-import type { Organization } from "./types";
-import { mockOrganizations } from "./data/mock-organizations";
+import type { Organization } from "../types";
+import { mockOrganizations } from "./mock-organizations";
 /** Event ownership lives only on Event.organizationId. Status uses the fixed demo calendar. */
 export function getEventsByOrganization(organizationId: string) {
   return mockEvents.filter((event) => event.organizationId === organizationId)

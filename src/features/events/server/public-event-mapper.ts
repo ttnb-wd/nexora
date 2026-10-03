@@ -7,7 +7,7 @@ export const publicEventSelect = {
   category: true, locationName: true, city: true, region: true, startAt: true,
   endAt: true, timezone: true, eventType: true, status: true,
   creator: { select: { name: true } },
-  organization: { select: { name: true, slug: true, industry: true, city: true, region: true, visualTheme: true } },
+  organization: { select: { name: true, slug: true, description: true, industry: true, city: true, region: true, visualTheme: true } },
 } satisfies Prisma.EventSelect;
 
 export type PublicEventRecord = Prisma.EventGetPayload<{ select: typeof publicEventSelect }>;
@@ -39,7 +39,7 @@ export function mapPublicEvent(record: PublicEventRecord, now = new Date()): Pub
   const tone = tones.includes(record.organization?.visualTheme as EventVisual)
     ? record.organization!.visualTheme as EventVisual : categoryTones[category];
   const organizer = record.organization
-    ? { name: record.organization.name, slug: record.organization.slug, industry: record.organization.industry ?? undefined, location: [record.organization.city, record.organization.region].filter(Boolean).join(", ") || undefined }
+    ? { name: record.organization.name, slug: record.organization.slug, description: record.organization.description ?? undefined, industry: record.organization.industry ?? undefined, location: [record.organization.city, record.organization.region].filter(Boolean).join(", ") || undefined }
     : { name: record.creator.name };
   const city = record.eventType === "ONLINE" ? "Online" : record.city ?? record.region ?? "Location to be announced";
   const venue = record.eventType === "ONLINE" ? "Online event" : record.locationName ?? "Venue to be announced";

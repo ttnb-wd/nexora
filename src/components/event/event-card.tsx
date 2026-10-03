@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { getOrganizationById, getOrganizationBySlug } from "@/features/organizations/organization-helpers";
 import { EventArtwork } from "@/features/events/components/event-artwork";
 import { useState } from "react";
 import { ArrowUpRight, Bookmark, CalendarDays, MapPin } from "lucide-react";
@@ -11,8 +10,8 @@ import styles from "./event-card.module.css";
 
 export type EventCardProps = { event: Event; variant?: EventCardVariant; saved?: boolean; onSave?: () => void; decorative?: boolean };
 export function EventCard({ event, variant = "standard", saved, onSave, decorative = false }: EventCardProps) {
-  const organization = event.organizer ?? getOrganizationById(event.organizationId);
-  const organizerLink = organization?.slug && getOrganizationBySlug(organization.slug) ? `/companies/${organization.slug}` : null;
+  const organization = event.organizer;
+  const organizerLink = organization?.slug ? `/companies/${organization.slug}` : null;
   const [localSaved, setLocalSaved] = useState(false);
   const isSaved = saved ?? localSaved;
   const date = new Date(`${event.date}T12:00:00Z`);

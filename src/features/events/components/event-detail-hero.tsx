@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { getOrganizationById, getOrganizationBySlug } from "@/features/organizations/organization-helpers";
 import { ArrowLeft, CalendarDays, Clock3, MapPin } from "lucide-react";
 import { EventArtwork } from "./event-artwork";
 import { EventActionButtons, type EventInteractionProps } from "./event-action-buttons";
@@ -7,8 +6,8 @@ import { formatEventDate } from "../event-helpers";
 import styles from "./event-detail.module.css";
 export function EventDetailHero(props: EventInteractionProps) {
   const { event, joined } = props;
-  const organization = event.organizer ?? getOrganizationById(event.organizationId);
-  const organizerLink = organization?.slug && getOrganizationBySlug(organization.slug) ? `/companies/${organization.slug}` : null;
+  const organization = event.organizer;
+  const organizerLink = organization?.slug ? `/companies/${organization.slug}` : null;
   return <header className={styles.hero}>
     <Link href="/explore" className={styles.back}><ArrowLeft size={15} aria-hidden="true" />Back to discovery</Link>
     <div className={styles.heroGrid}><div className={styles.heroCopy}>

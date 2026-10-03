@@ -36,6 +36,11 @@ export async function createOrganization(_previous: OrganizationFormState, form:
     }
     return { message: "Something went wrong while creating the organization. Please try again shortly.", values };
   }
+  revalidatePath("/companies");
+  revalidatePath("/companies/[slug]", "page");
+  revalidatePath("/events/[slug]", "page");
+  revalidatePath("/");
+  revalidatePath("/explore");
   revalidatePath("/organizer");
   revalidatePath("/dashboard");
   redirect(`/organizer/${slug}`);
@@ -59,6 +64,11 @@ export async function updateOrganization(slug: string, _previous: OrganizationFo
     return { message: "Something went wrong while saving the organization. Please try again shortly.", values };
   }
   if (!updatedCount) notFound();
+  revalidatePath("/companies");
+  revalidatePath("/companies/[slug]", "page");
+  revalidatePath("/events/[slug]", "page");
+  revalidatePath("/");
+  revalidatePath("/explore");
   revalidatePath("/organizer");
   revalidatePath(`/organizer/${organization.slug}`);
   revalidatePath(`/organizer/${organization.slug}/settings`);

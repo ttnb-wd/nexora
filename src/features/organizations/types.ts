@@ -23,6 +23,20 @@ export interface Organization {
   socialLinks: OrganizationSocialLink[];
   createdAt?: string;
 }
-export interface OrganizationFiltersState { query: string; industry: OrganizationIndustry | "All industries"; location: string }
+export interface OrganizationFiltersState { query: string; industry: string; location: string }
 export type OrganizationSort = "relevance" | "alphabetical";
 export type OrganizationCardVariant = "standard" | "featured" | "compact";
+
+/** Serializable public identity. No internal IDs, memberships, or auth data. */
+export interface PublicOrganization {
+  name: string;
+  slug: string;
+  shortName: string;
+  description: string;
+  industry: string;
+  city: string;
+  region: string;
+  website: string | null;
+  visualTheme: OrganizationTheme;
+  logoVariant: OrganizationLogo;
+}

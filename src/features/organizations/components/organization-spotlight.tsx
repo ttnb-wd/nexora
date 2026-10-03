@@ -1,28 +1,26 @@
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight, MapPin } from "lucide-react";
-import type { Organization } from "../types";
-import { getOrganizationEvents } from "../organization-events";
+import type { PublicOrganization } from "../types";
+import type { PublicEvent } from "@/features/events/types";
 import { OrganizationVisual } from "./organization-visual";
 import { OrganizationFollowButton } from "./organization-follow-button";
 import { cn } from "@/lib/utils";
 import shared from "./organizations.module.css";
 import styles from "./organizations-discovery.module.css";
 
-export function OrganizationSpotlight({ organization, following, onToggleFollow }: {
-  organization: Organization; following: boolean; onToggleFollow: () => void;
+export function OrganizationSpotlight({ organization, upcomingCount, nextEvent, following, onToggleFollow }: {
+  organization: PublicOrganization; upcomingCount: number; nextEvent: PublicEvent | null; following: boolean; onToggleFollow: () => void;
 }) {
-  const { upcoming } = getOrganizationEvents(organization);
-  const nextEvent = upcoming[0];
   const nextDate = nextEvent && new Date(`${nextEvent.date}T12:00:00Z`).toLocaleDateString("en", { month: "short", day: "numeric", timeZone: "UTC" });
   return <section aria-labelledby="trending-organization-title" className={cn(styles.spotlight, shared[organization.visualTheme])}>
     <p className={styles.spotlightLabel}>TRENDING ON NEXORA</p>
     <div className={styles.spotlightIdentity}>
       <OrganizationVisual organization={organization} className={styles.spotlightArtwork} />
       <div className={styles.spotlightCopy}>
-        <div className={styles.metadata}><span>{organization.industry}</span><span><MapPin size={12} aria-hidden="true" />{organization.location.city}</span></div>
+        <div className={styles.metadata}><span>{organization.industry}</span><span><MapPin size={12} aria-hidden="true" />{organization.city || organization.region || "Location not shared"}</span></div>
         <h2 id="trending-organization-title"><Link href={`/companies/${organization.slug}`}>{organization.name}</Link></h2>
         <p>{organization.description}</p>
-        <span className={styles.activity}>{upcoming.length} upcoming {upcoming.length === 1 ? "event" : "events"}</span>
+        <span className={styles.activity}>{upcomingCount} upcoming {upcomingCount === 1 ? "event" : "events"}</span>
       </div>
     </div>
     {nextEvent && <Link className={styles.nextEvent} href={`/events/${nextEvent.slug}`} aria-label={`Next event: ${nextEvent.title}`}>

@@ -6,7 +6,7 @@ export type EventVisual = "violet" | "cyan" | "coral" | "orange" | "warm" | "pin
 export type EventCardVariant = "featured" | "standard" | "compact" | "editorial";
 
 export interface AgendaItem { time: string; title: string; description: string }
-export interface EventSpeaker { name: string; role: string; organizationId: string; bio: string; tone: EventVisual }
+export interface EventSpeaker { name: string; role: string; organizationId: string; organizationName?: string; bio: string; tone: EventVisual }
 export interface EventResource { type: "Slides" | "Recording" | "Links" | "Notes"; title: string; description: string }
 export interface EventDetails {
   about: string[];
@@ -28,7 +28,7 @@ export interface Event {
   location: { city: string; venue: string };
   organizationId: string;
   /** Public identity only; internal user and organization IDs stay on the server. */
-  organizer?: { name: string; slug?: string; industry?: string; location?: string };
+  organizer?: { name: string; slug?: string; industry?: string; description?: string; location?: string };
   source?: "database" | "fixture";
   startAt?: string;
   timezone?: string;
@@ -43,7 +43,7 @@ export interface Event {
 
 /** Serializable public view model produced by the server mapper, never a Prisma record. */
 export interface PublicEvent extends Event {
-  organizer: { name: string; slug?: string; industry?: string; location?: string };
+  organizer: { name: string; slug?: string; industry?: string; description?: string; location?: string };
   source: "database";
   startAt: string;
   timezone: string;

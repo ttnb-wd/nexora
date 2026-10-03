@@ -1,4 +1,5 @@
 /** Development and design fixtures only. Public routes load real events from Neon. */
+import { mockOrganizations } from "@/features/organizations/data/mock-organizations";
 import type { Event } from "../types";
 import { completedDetail, getMockDetail } from "./mock-event-details";
 
@@ -16,13 +17,19 @@ const eventPreviews: Omit<Event, "slug" | "tags" | "status" | "details">[] = [
   { id: "tech-weekend", title: "Build something this weekend", category: "Technology", date: "2026-11-14", time: "10:00 AM – 4:00 PM · MMT", location: { city: "Yangon", venue: "Maker House" }, organizationId: "weekend-makers", type: "In person", description: "Bring a small idea and spend a day making it tangible.", visual: { tone: "cyan", headline: "THINK / MAKE", caption: "Curiosity gets its hands dirty." } },
 ];
 
-export const mockEvents: Event[] = [
+const fixtureEvents: Event[] = [
   ...eventPreviews.map((event): Event => {
     const { details, tags, cover } = getMockDetail(event.id);
     return { ...event, slug: event.id, status: "upcoming", tags, details, visual: { ...event.visual, tone: cover ?? event.visual.tone } };
   }),
   { id: "creative-notebook", slug: "creative-notebook", title: "The creative notebook", category: "Design", date: "2026-09-26", time: "2:00 – 5:00 PM · MMT", location: { city: "Yangon", venue: "Studio 09" }, organizationId: "form-and-friends", type: "In person", description: "Small discoveries, shared sketches, and a different way to see your creative process.", visual: { tone: "coral", headline: "NOTICE / MORE", caption: "A gathering worth revisiting." }, tags: ["Creative practice", "Learning", "Connection"], status: "completed", details: completedDetail },
 ];
+
+// Resolve fixture identity here so shared public components never import mock organizations.
+export const mockEvents: Event[] = fixtureEvents.map((event) => {
+  const organization = mockOrganizations.find((candidate) => candidate.id === event.organizationId);
+  return { ...event, source: "fixture", organizer: organization ? { name: organization.name, slug: organization.slug, industry: organization.industry, description: organization.description, location: organization.location.city } : undefined };
+});
 
 export const featuredEvent = mockEvents[0];
 export const homepageEvents = mockEvents.slice(1, 4);

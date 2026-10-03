@@ -1,8 +1,9 @@
 /** Development and design fixtures only. Never attach these details to database events. */
+import { mockOrganizations } from "@/features/organizations/data/mock-organizations";
 import type { EventDetails, EventSpeaker, EventVisual } from "../types";
 
 // Fictional profiles for UI development; no real-person imagery or identities.
-const speakers: EventSpeaker[] = [
+const speakerFixtures: EventSpeaker[] = [
   { name: "Maya Lin Htet", role: "Creative technologist", organizationId: "tomorrow-collective", bio: "Maya explores how small experiments can make emerging technology more useful to everyday communities.", tone: "cyan" },
   { name: "Alex Thura", role: "Product designer", organizationId: "form-and-friends", bio: "Alex brings a thoughtful mix of systems thinking, playful prototyping, and human-centered design.", tone: "pink" },
   { name: "Nora Win", role: "Community builder", organizationId: "good-company", bio: "Nora creates spaces where strangers can become collaborators through shared stories and small acts of connection.", tone: "coral" },
@@ -10,6 +11,7 @@ const speakers: EventSpeaker[] = [
   { name: "Jamie Khin", role: "Research lead", organizationId: "open-lab", bio: "Jamie makes complex ideas approachable through open conversation and hands-on learning.", tone: "violet" },
   { name: "Ellis Min", role: "Career coach", organizationId: "next-chapter-network", bio: "Ellis helps people recognize their strengths and shape a next chapter with intention.", tone: "mixed" },
 ];
+const speakers: EventSpeaker[] = speakerFixtures.map((speaker) => ({ ...speaker, organizationName: mockOrganizations.find((organization) => organization.id === speaker.organizationId)?.name }));
 
 type DetailSeed = { about: string; times: string[]; sessions: string[]; speakerIndices: number[]; address: string; guidance: string; tags: string[]; cover?: EventVisual };
 const seeds: Record<string, DetailSeed> = {

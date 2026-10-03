@@ -23,6 +23,8 @@ function refreshEvent(path: string, organizationSlug?: string, eventSlug?: strin
   if (organizationSlug) revalidatePath(`/organizer/${organizationSlug}/events`);
   revalidatePath("/");
   revalidatePath("/explore");
+  revalidatePath("/companies");
+  revalidatePath("/companies/[slug]", "page");
   // Other detail pages may contain this event in their related cards.
   revalidatePath("/events/[slug]", "page");
   if (eventSlug) revalidatePath(`/events/${eventSlug}`);
