@@ -51,3 +51,11 @@ artifacts/
 # Codex step reports
 docs/step-08-organization-management.md
 docs/step-09-event-management.md
+
+# Documentation / reports
+docs/
+*.md
+
+# Generated screenshots / artifacts
+artifacts/
+*.png
