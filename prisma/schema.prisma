@@ -46,6 +46,7 @@ model User {
   followedOrganizations OrganizationFollower[]
   notifications Notification[]
   eventReminders EventReminderPreference[]
+  feedback      EventFeedback[]
 }
 
 model Session {
@@ -169,6 +170,7 @@ model Event {
   speakers             EventSpeaker[]
   resources            EventResource[]
   reminderPreferences  EventReminderPreference[]
+  feedback             EventFeedback[]
 
   @@index([creatorId])
   @@index([organizationId, startAt])
@@ -260,6 +262,22 @@ model EventRegistration {
   @@index([eventId, createdAt])
   @@index([userId, status])
   @@index([checkedInById])
+}
+
+model EventFeedback {
+  id        String   @id @default(cuid())
+  eventId   String
+  userId    String
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  event     Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@index([userId])
+  @@index([eventId, createdAt, id])
 }
 
 model EventBookmark {

@@ -66,7 +66,7 @@ try {
  await db.eventReminderPreference.createMany({data:[{eventId:main.id,userId:attendee.id,enabled:true,reminderMinutes:60},{eventId:main.id,userId:people[3].id,enabled:true,reminderMinutes:60}]});
  const ticket=await loadOwnTicket(db,attendee.id,main.slug,process.env.AUTH_SECRET,true);assert.ok(ticket);
  let data=await loadEventAnalytics(db,owner.id,main.id,org.slug,'30',now);
- assert.equal(data.totalRegistrations,6);assert.equal(data.counts.REGISTERED,2);assert.equal(data.counts.ATTENDED,1);assert.equal(data.counts.CANCELLED,1);assert.equal(data.occupied,3);assert.equal(data.remaining,2);assert.equal(data.utilization,60);assert.ok(Math.abs(data.attendanceRate-100/3)<1e-9);assert.equal(data.saves,2);assert.equal(data.reminders,1);assert.equal(data.tickets,1);assert.equal(data.checkIns,1);
+ assert.equal(data.totalRegistrations,6);assert.equal(data.counts.REGISTERED,2);assert.equal(data.counts.ATTENDED,1);assert.equal(data.counts.CANCELLED,1);assert.equal(data.occupied,3);assert.equal(data.remaining,2);assert.equal(data.utilization,60);assert.ok(Math.abs(data.attendanceRate-25)<1e-9);assert.equal(data.saves,2);assert.equal(data.reminders,1);assert.equal(data.tickets,1);assert.equal(data.checkIns,1);
  pass('event metrics: registrations/statuses, cancellation exclusion, attendance denominator, capacity, saves, reminders, tickets and check-ins');
  assert.equal(data.trend.points.length,1);assert.equal(data.trend.points[0].registrations,4);assert.equal(data.trend.points[0].cumulative,6);assert.equal(data.trend.timezone,'Asia/Yangon');
  data=await loadEventAnalytics(db,owner.id,main.id,org.slug,'all',now);assert.equal(data.trend.bucket,'month');assert.equal(data.trend.points.at(-1).cumulative,6);

@@ -146,9 +146,9 @@ try{
   assert.ok((await html(`/organizer/${orgSlug}/events/${other.id}/attendees`,owner)).includes('Attendance is read-only'));
  }
  await db.event.update({where:{id:other.id},data:{status:'COMPLETED'}});
- assert.equal((await attendance('checkInAttendee',other,foreign,owner)).ok,true);
- assert.equal((await attendance('undoAttendeeCheckIn',other,foreign,owner,orgSlug,{confirm:'yes'})).ok,true);
- pass('published/completed attendance editable; draft/cancelled/archived attendance read-only');
+ assert.ok(!(await attendance('checkInAttendee',other,foreign,owner)).ok);
+ assert.ok(!(await attendance('undoAttendeeCheckIn',other,foreign,owner,orgSlug,{confirm:'yes'})).ok);
+ pass('published attendance editable; completed/finalized and draft/cancelled/archived attendance read-only');
  // Pagination verifies a secure query cannot silently truncate totals at the first page.
  const paginated=await fixture('pagination',org.id,null),bulkUsers=[];
  for(let index=0;index<51;index++)bulkUsers.push({id:`s15-${run}-bulk-${index}`,name:`Step15 bulk ${index}`,email:`step15-${run}-bulk-${index}@example.com`});
@@ -159,10 +159,11 @@ try{
  assert.ok((await html(`/organizer/${orgSlug}/events/${paginated.id}/attendees?page=2`,owner)).includes('Previous page'));
  pass('50-row pagination retains accurate full-event summary and unlimited-capacity semantics');
  await db.organizationMember.create({data:{userId:bulkUsers[0].id,organizationId:org.id,role:'EDITOR'}});
- assert.equal((await mutateAttendance(db,bulkUsers[0].id,{eventId:other.id,scope:orgSlug,registrationId:foreign.id},'check-in')).ok,true);
- const beforeActorDelete=await current(foreign);
+ const actorDeleteRegistration=await db.eventRegistration.findUniqueOrThrow({where:{userId_eventId:{userId:bulkUsers[1].id,eventId:paginated.id}}});
+ assert.equal((await mutateAttendance(db,bulkUsers[0].id,{eventId:paginated.id,scope:orgSlug,registrationId:actorDeleteRegistration.id},'check-in')).ok,true);
+ const beforeActorDelete=await current(actorDeleteRegistration);
  await db.user.delete({where:{id:bulkUsers[0].id}});
- const afterActorDelete=await current(foreign);
+ const afterActorDelete=await current(actorDeleteRegistration);
  assert.equal(afterActorDelete.status,'ATTENDED');assert.equal(afterActorDelete.checkedInById,null);assert.equal(afterActorDelete.checkedInAt.toISOString(),beforeActorDelete.checkedInAt.toISOString());
  pass('deleting a disposable check-in actor retains attendee registration and timestamp with SetNull relation');
  const raceEvent=await fixture('cancellation-race'),raceRegistration=await register(raceEvent,attendee);

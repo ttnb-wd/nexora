@@ -10,8 +10,9 @@ export function statusCounts(groups: { status: keyof StatusCounts; _count: { _al
 }
 export function eventMetrics(counts: StatusCounts, capacity: number | null) {
   const occupied = counts.REGISTERED + counts.ATTENDED;
+  const attendanceEligible = occupied + counts.NO_SHOW;
   return { counts, totalRegistrations: Object.values(counts).reduce((a,b) => a+b,0), occupied,
-    attendanceRate: occupied ? counts.ATTENDED / occupied * 100 : null,
+    attendanceEligible, attendanceRate: attendanceEligible ? counts.ATTENDED / attendanceEligible * 100 : null,
     capacity, remaining: capacity === null ? null : Math.max(0,capacity-occupied),
     utilization: capacity === null || capacity <= 0 ? null : occupied / capacity * 100 };
 }

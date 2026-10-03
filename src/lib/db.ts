@@ -23,7 +23,9 @@ export function getDb(): PrismaClient {
   // Ordinary request handlers must never disconnect this process-wide stack.
   const adapter = new PrismaPg(pool, { disposeExternalPool: true });
   // Disable query logging: auth queries may contain sensitive credential fields.
-  const client = new PrismaClient({ adapter, log: [] });
+  // Better Auth uses the client's default interactive transaction window. Five
+  // seconds is too short for a valid remote Neon transaction during a slow wake-up.
+  const client = new PrismaClient({ adapter, log: [], transactionOptions: { maxWait: 10000, timeout: 15000 } });
   // Store all ownership together, in every Node environment. Module reloads must
   // not create a second adapter/pool alongside a surviving PrismaClient.
   databaseGlobal.nexoraDatabaseRuntime = { pool, adapter, client };

@@ -57,7 +57,7 @@ export function mapPublicEvent(record: PublicEventRecord & Partial<Pick<DetailRe
   const about = record.description ? [record.description] : record.shortDescription ? [record.shortDescription] : [];
   const zoneLabel = new Intl.DateTimeFormat("en-US", { timeZone: record.timezone, timeZoneName: "short" }).formatToParts(record.startAt).find((part) => part.type === "timeZoneName")?.value ?? record.timezone;
   return {
-    id: record.id, slug: record.slug, title: record.title, category,
+    id: record.slug, slug: record.slug, title: record.title, category,
     date: dateInZone(record.startAt, record.timezone),
     time: `${timeInZone(record.startAt, record.timezone)} – ${timeInZone(record.endAt, record.timezone)} · ${zoneLabel}`,
     startAt: record.startAt.toISOString(), timezone: record.timezone,

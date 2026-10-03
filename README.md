@@ -79,7 +79,7 @@ No tracking, new cookies, external analytics, reports or background jobs are add
 Event KPIs are lifetime current-record totals. Registration records includes all
 statuses; Registered counts REGISTERED, Attended counts ATTENDED and Cancelled
 counts CANCELLED. Optional WAITLISTED/NO_SHOW rows appear when records exist.
-Attendance rate is `ATTENDED / (REGISTERED + ATTENDED)`; zero eligible registrations
+Attendance rate is `ATTENDED / (REGISTERED + ATTENDED + NO_SHOW)`; zero eligible registrations
 shows Not available. Occupied seats uses REGISTERED + ATTENDED, remaining seats
 is max(0, capacity - occupied), and utilization is occupied / capacity. Null
 capacity shows Unlimited rather than a percentage.
@@ -276,3 +276,41 @@ lock to force both HTTP jobs to overlap. Failure safety injects a division-by-ze
 query inside one disposable delivery transaction; it never changes schema.
 Run npm run build first. The existing dev server and saved env files are untouched.
 Run ledgers and sanitized server logs are saved under artifacts/step19/real-world-*.
+
+## Step 20: post-event lifecycle and private feedback
+
+Completion is manual. OWNER, ADMIN and EDITOR can complete their organization's
+PUBLISHED event after its database end time; an individual creator can complete
+only their own event. Event management requires an explicit confirmation after
+check-ins have been reviewed. CANCELLED, ARCHIVED and future events cannot complete.
+A parent-event row lock and one transaction finalize attendance and event status.
+ATTENDED and CANCELLED are preserved; unchecked REGISTERED becomes NO_SHOW.
+Attendance is then read-only. Existing public resources and completed-event resource
+management remain available. Reminders are disabled at completion. No completion
+notifications, email surveys, automatic completion or public ratings are added.
+
+Only a session-authenticated ATTENDED user on a database-COMPLETED event can submit
+or edit their single response. Ratings are integers 1–5; optional comments are
+trimmed and limited to 1000 characters, with whitespace-only input rejected.
+The event page contains a separate post-event feedback section; no-show users see
+“Not checked in” and retain public resource access. Organizers see aggregates and
+anonymous, escaped comments on the event management Feedback page. MEMBER and
+unrelated users cannot access that page. Emails and identity/ticket fields are not
+selected for feedback insights. Comment pages contain at most 20 entries.
+
+Attendance rate = ATTENDED / (REGISTERED + ATTENDED + NO_SHOW).
+Feedback response rate = responses / ATTENDED. Zero denominators display
+Not available. Capacity calculations still use only REGISTERED + ATTENDED.
+The new post_event_feedback migration adds EventFeedback, cascading relations,
+unique (eventId, userId), database rating/comment checks, a userId relation index,
+and (eventId, createdAt, id) for scoped comment pagination. Older migrations remain
+unchanged. Deploy with the existing Render/Neon setup and run `npm run db:migrate`
+before serving the new code; cron-job.org continues to run the secure Step 19 POST.
+
+Run `npm run test:post-event` for focused unit tests. The real Neon/browser suite
+requires explicit disposable-write authorization and
+`$env:STEP20_DISPOSABLE_APPROVED='1'; npm run test:post-event:runtime`.
+It starts an isolated production server and headless Chrome, creates uniquely
+prefixed fixtures, and cleans them in finally. Cookies stay in memory. Artifacts
+under artifacts/step20 record exact created/cleaned counts and business-table
+before/after hashes (ephemeral authentication rate-limit maintenance is excluded). Do not run mutating suites simultaneously.

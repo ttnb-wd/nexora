@@ -24,7 +24,7 @@ try{
  await go(eventPath);
  assert.equal(await evaluate(`document.querySelector('h1').textContent`),'Step18 metrics');
  const metrics=await evaluate(`Object.fromEntries([...document.querySelectorAll('main dl > div')].map(element=>[element.querySelector('dt').textContent,element.querySelector('dd').textContent]))`);
- assert.equal(metrics.Registered,'2');assert.equal(metrics.Attended,'1');assert.equal(metrics['Saved'],'2');assert.equal(metrics['Remaining capacity'],'2');assert.equal(metrics['Attendance rate'],'33.3%');
+ assert.equal(metrics.Registered,'2');assert.equal(metrics.Attended,'1');assert.equal(metrics['Saved'],'2');assert.equal(metrics['Remaining capacity'],'2');assert.equal(metrics['Attendance rate'],'25%');
  assert.equal(await evaluate(`document.querySelector('svg[role="img"] title').textContent`),'Cumulative first registrations over time');
  await click('main summary');assert.ok(await evaluate(`document.querySelector('main details').open`));pass('Event analytics displays real KPIs, accessible chart and exact trend table');await screenshot('event-desktop');
  await click('main nav[aria-label="Registration trend period"] a[href$="range=30"]');await until(`location.search==='?range=30' && document.querySelector('main nav[aria-label="Registration trend period"] a[aria-current]').textContent==='Last 30 days'`);pass('Event trend date presets navigate and update the active period');

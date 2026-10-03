@@ -40,15 +40,19 @@ export async function loadEventAnalytics(db: PrismaClient, actorId: string, even
   return db.$transaction(async tx => {
     const event = await tx.event.findFirst({ where: eventWhere(actorId, eventId, scope), select: eventSelect });
     if (!event) return null;
-    const [groups, saves, reminders, tickets, checkIns, trend] = await Promise.all([
+    const [groups, saves, reminders, tickets, checkIns, trend, feedback] = await Promise.all([
       tx.eventRegistration.groupBy({ by: ["status"], where: { eventId: event.id }, _count: { _all: true } }),
       tx.eventBookmark.count({ where: { eventId: event.id } }),
       tx.eventReminderPreference.count({ where: { eventId: event.id, enabled: true, user: { registrations: { some: { eventId: event.id, status: "REGISTERED" } } } } }),
       tx.eventRegistration.count({ where: { eventId: event.id, status: { in: ["REGISTERED", "ATTENDED"] }, ticketIssuedAt: { not: null }, ticketTokenHash: { not: null } } }),
       tx.eventRegistration.count({ where: { eventId: event.id, status: "ATTENDED", checkedInAt: { not: null } } }),
       includeTrend ? readTrend(tx,event.id,event.timezone,range,now) : Promise.resolve(null),
+      tx.eventFeedback.aggregate({ where: { eventId: event.id }, _count: { _all: true }, _avg: { rating: true } }),
     ]);
-    return { event, ...eventMetrics(statusCounts(groups),event.capacity), saves, reminders, tickets, checkIns, trend, range, asOf: now };
+    const metrics = eventMetrics(statusCounts(groups), event.capacity);
+    return { event, ...metrics, saves, reminders, tickets, checkIns, trend, range, asOf: now,
+      feedbackResponses: feedback._count._all, averageRating: feedback._avg.rating,
+      feedbackResponseRate: metrics.counts.ATTENDED ? feedback._count._all / metrics.counts.ATTENDED * 100 : null };
   }, transactionOptions);
 }
 
@@ -72,7 +76,7 @@ export async function loadOrganizationAnalytics(db: PrismaClient, actorId: strin
       tx.$queryRaw<{ rate: number | null }[]>(Prisma.sql`
         SELECT AVG(rate)::double precision AS rate FROM (
           SELECT 100.0 * COUNT(*) FILTER (WHERE r.status = 'ATTENDED') /
-            NULLIF(COUNT(*) FILTER (WHERE r.status IN ('REGISTERED', 'ATTENDED')), 0) AS rate
+            NULLIF(COUNT(*) FILTER (WHERE r.status IN ('REGISTERED', 'ATTENDED', 'NO_SHOW')), 0) AS rate
           FROM "Event" e JOIN "EventRegistration" r ON r."eventId" = e.id
           WHERE e."organizationId" = ${organization.id} AND e.status IN ('PUBLISHED','COMPLETED')
             AND (e.status = 'COMPLETED' OR e."endAt" <= ${now})

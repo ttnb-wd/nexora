@@ -34,8 +34,8 @@ export async function getFeaturedPublishedEvents(now = new Date()) {
   return (await getUpcomingPublishedEvents(1, now))[0] ?? null;
 }
 
-export async function getRelatedPublishedEvents(event: { id: string; category: string; organizer?: { slug?: string }; startAt?: string }, limit = 3, now = new Date()) {
-  const records = await getDb().event.findMany({ where: { status: "PUBLISHED", id: { not: event.id }, startAt: { gte: now } }, select: publicEventSelect, orderBy: [{ startAt: "asc" }, { id: "asc" }], take: discoveryLimit });
+export async function getRelatedPublishedEvents(event: { slug: string; category: string; organizer?: { slug?: string }; startAt?: string }, limit = 3, now = new Date()) {
+  const records = await getDb().event.findMany({ where: { status: "PUBLISHED", slug: { not: event.slug }, startAt: { gte: now } }, select: publicEventSelect, orderBy: [{ startAt: "asc" }, { id: "asc" }], take: discoveryLimit });
   const anchor = event.startAt ? new Date(event.startAt).getTime() : now.getTime();
   return records.sort((a, b) => {
     const score = (candidate: typeof a) => [Number(candidate.category === event.category), Number(Boolean(event.organizer?.slug && candidate.organization?.slug === event.organizer.slug)), -Math.abs(candidate.startAt.getTime() - anchor)];

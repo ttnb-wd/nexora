@@ -10,7 +10,7 @@ assert.equal(process.env.NEXORA_DISPOSABLE_APPROVED,'1','Explicit disposable Neo
 nextEnv.loadEnvConfig(process.cwd());
 const db = new PrismaClient({adapter:new PrismaPg({connectionString:process.env.DATABASE_URL}),log:[]});
 const suites = ['neon-runtime','organization-runtime','event-runtime','public-event-runtime','public-organization-runtime','participation-runtime','follow-notification-runtime','event-content-runtime','attendees-runtime','calendar-reminders-runtime','tickets-runtime','neon-public-routes','public-organization-readonly','participation-readonly','analytics-runtime'];
-const reportRoot = process.env.STEP18_DISPOSABLE_APPROVED === '1' ? 'artifacts/step18' : 'artifacts';
+const reportRoot = process.env.STEP20_DISPOSABLE_APPROVED === '1' ? 'artifacts/step20' : process.env.STEP18_DISPOSABLE_APPROVED === '1' ? 'artifacts/step18' : 'artifacts';
 const reportPrefix = process.env.STEP18_DISPOSABLE_APPROVED === '1' ? 'regression' : 'step17-regression';
 mkdirSync(reportRoot,{recursive:true});
 const selected=process.argv.slice(2);

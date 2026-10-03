@@ -30,6 +30,8 @@ test('public projection and serialized DTO exclude private fields', () => {
     if (key !== 'organizationId') assert.ok(!(key in event), `DTO contains ${key}`);
   }
   assert.equal(event.organizationId, '');
+  assert.equal(event.id, record.slug);
+  assert.ok(!JSON.stringify(event).includes(record.id));
   assert.equal(event.organizer.location, 'Yangon, Myanmar');
 });
 
@@ -54,10 +56,10 @@ test('individual, unknown-category, missing-description, and completed fallbacks
 
 test('filters search real organizer names and compare instants across date/month boundaries', () => {
   const first = mapPublicEvent(record, now);
-  const later = mapPublicEvent({ ...record, id: 'later', title: 'Later gathering', startAt: new Date('2026-11-01T00:00:00Z') }, now);
-  assert.deepEqual(filterEvents([first, later], { ...initialFilters, query: 'real organization' }, 'soonest', now).map((event) => event.id), ['event-id', 'later']);
-  assert.deepEqual(filterEvents([first, later], { ...initialFilters, date: 'This week' }, 'soonest', now).map((event) => event.id), ['event-id']);
-  assert.deepEqual(filterEvents([first, later], { ...initialFilters, date: 'This month' }, 'soonest', now).map((event) => event.id), ['event-id']);
+  const later = mapPublicEvent({ ...record, id: 'later', slug: 'later', title: 'Later gathering', startAt: new Date('2026-11-01T00:00:00Z') }, now);
+  assert.deepEqual(filterEvents([first, later], { ...initialFilters, query: 'real organization' }, 'soonest', now).map((event) => event.id), ['real-gathering', 'later']);
+  assert.deepEqual(filterEvents([first, later], { ...initialFilters, date: 'This week' }, 'soonest', now).map((event) => event.id), ['real-gathering']);
+  assert.deepEqual(filterEvents([first, later], { ...initialFilters, date: 'This month' }, 'soonest', now).map((event) => event.id), ['real-gathering']);
   assert.deepEqual(filterEvents([first, later], { ...initialFilters, date: 'Later' }, 'soonest', now).map((event) => event.id), ['later']);
   assert.equal(filterEvents([first], { ...initialFilters, category: 'AI' }, 'recommended', now).length, 0);
   assert.equal(filterEvents([first], { ...initialFilters, type: 'Online' }, 'recommended', now).length, 0);

@@ -6,10 +6,10 @@ const { eventMetrics, statusCounts, analyticsRange, rangeStart } = await import(
 const { loadEventAnalytics, loadOrganizationAnalytics } = await import('../src/features/analytics/server/service.ts');
 const now = new Date('2026-10-03T06:00:00Z');
 const groups = [{status:'REGISTERED',_count:{_all:3}},{status:'ATTENDED',_count:{_all:1}},{status:'CANCELLED',_count:{_all:5}}];
-test('attendance and utilization exclude cancelled, waitlisted and no-show records; empty/unlimited states are explicit', () => {
+test('attendance includes no-shows while utilization excludes them; empty/unlimited states are explicit', () => {
  const counts = statusCounts([...groups,{status:'WAITLISTED',_count:{_all:2}},{status:'NO_SHOW',_count:{_all:2}}]);
  const metrics = eventMetrics(counts,5);
- assert.equal(metrics.totalRegistrations,13); assert.equal(metrics.occupied,4); assert.equal(metrics.attendanceRate,25); assert.equal(metrics.utilization,80); assert.equal(metrics.remaining,1);
+ assert.equal(metrics.totalRegistrations,13); assert.equal(metrics.occupied,4); assert.ok(Math.abs(metrics.attendanceRate-100/6)<1e-9); assert.equal(metrics.utilization,80); assert.equal(metrics.remaining,1);
  assert.equal(eventMetrics(counts,2).remaining,0); assert.equal(eventMetrics(counts,2).utilization,200);
  assert.equal(eventMetrics(counts,null).utilization,null); assert.equal(eventMetrics(counts,null).remaining,null);
  assert.equal(eventMetrics(statusCounts([]),5).attendanceRate,null); assert.equal(eventMetrics(statusCounts([]),5).utilization,0);
@@ -26,7 +26,7 @@ function mock(authorized=true) {
   event:{findFirst:async args=>{calls.push({authorization:args});return authorized?event:null;}, count:async args=>{calls.push({eventCount:args});return 1;},findMany:async args=>{calls.push({recent:args});return [event];}},
   organizationMember:{findFirst:async args=>{calls.push({membership:args});return authorized?{organization:{id:'org',slug:'organization',name:'Organization'}}:null;}},
   eventRegistration:{groupBy:async args=>{calls.push({group:args});return args.by.includes('eventId')?groups.map(g=>({...g,eventId:'event'})):groups;},count:async args=>{calls.push({registrationCount:args});return 1;}},
-  eventBookmark:{count:async args=>{calls.push({saves:args});return 2;}},eventReminderPreference:{count:async args=>{calls.push({reminders:args});return 1;}},organizationFollower:{count:async args=>{calls.push({followers:args});return 4;}},
+  eventFeedback:{aggregate:async()=>({_count:{_all:0},_avg:{rating:null}})},eventBookmark:{count:async args=>{calls.push({saves:args});return 2;}},eventReminderPreference:{count:async args=>{calls.push({reminders:args});return 1;}},organizationFollower:{count:async args=>{calls.push({followers:args});return 4;}},
   $queryRaw:async query=>{calls.push({sql:query.sql,values:query.values});return query.sql.includes('AVG(rate)')?[{rate:25}]:[{date:'2026-10-01',registrations:2n,cumulative:8n}];},
  };
  return {calls,db:{$transaction:async(fn,options)=>{assert.equal(options.isolationLevel,'RepeatableRead');return fn(tx);}}};

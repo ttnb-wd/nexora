@@ -12,6 +12,7 @@ import { eventAccessWhere, eventManagerRoles, eventManagementPath, requireEventA
 import { eventToFormValues } from "./form-values";
 
 import { notifyEventPublished, notifyEventCancelled } from "@/features/notifications/server/creation";
+import { completeManagedEvent } from "@/features/post-event/service";
 
 function fieldsFromForm(form: FormData) { return Object.fromEntries(Object.keys(emptyEventValues).map((key) => [key, form.get(key) ?? ""])); }
 function safeError(error: unknown): EventActionState {
@@ -124,4 +125,16 @@ export async function cancelEvent(eventId: string, scope: string | null, _previo
   if (!count) return { message: "This event changed or your access was removed. Reload it before cancelling." };
   refreshEvent(eventManagementPath(event), event.organization?.slug, event.slug);
   redirect(eventManagementPath(event));
+}
+
+export async function completeEvent(eventId: string, scope: string | null, _previous: EventActionState, form: FormData): Promise<EventActionState> {
+  const user = await requireUser();
+  const result = await completeManagedEvent(getDb(), user.id, eventId, scope, form.get("confirm") === "yes");
+  if (!result.ok) return { message: result.message };
+  const path = scope ? `/organizer/${scope}/events/${eventId}` : `/dashboard/events/${eventId}`;
+  refreshEvent(path, scope ?? undefined, "slug" in result ? result.slug : undefined);
+  revalidatePath(`${path}/attendees`);
+  revalidatePath(`${path}/analytics`);
+  revalidatePath(`${path}/feedback`);
+  redirect(path);
 }

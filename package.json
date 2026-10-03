@@ -40,7 +40,9 @@
     "test:social": "node --test tests/follow-notification.test.mjs",
     "test:social:runtime": "node tests/follow-notification-runtime.mjs",
     "test:analytics": "node --test tests/analytics.test.mjs",
-    "test:analytics:runtime": "node tests/analytics-runtime.mjs"
+    "test:analytics:runtime": "node tests/analytics-runtime.mjs",
+    "test:post-event": "node --test tests/post-event.test.mjs",
+    "test:post-event:runtime": "node tests/post-event-runtime.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

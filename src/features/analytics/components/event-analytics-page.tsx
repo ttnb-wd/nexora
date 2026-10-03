@@ -18,8 +18,14 @@ export async function EventAnalyticsPage({ eventId, scope, range }: { eventId: s
       {label:"Registration records",value:data.totalRegistrations,note:"All current statuses, including cancelled"},
       {label:"Registered",value:data.counts.REGISTERED,note:"Not yet checked in"},
       {label:"Attended",value:data.counts.ATTENDED},
+      {label:"Not checked in",value:data.counts.NO_SHOW,note:"Finalized no-show records"},
       {label:"Cancelled registrations",value:data.counts.CANCELLED},
-      {label:"Attendance rate",value:percent(data.attendanceRate),note:data.occupied ? `${data.counts.ATTENDED} attended / ${data.occupied} eligible` : "No eligible registrations yet"},
+      {label:"Attendance rate",value:percent(data.attendanceRate),note:data.attendanceEligible ? `${data.counts.ATTENDED} attended / ${data.attendanceEligible} eligible` : "No eligible registrations yet"},
+      ...(data.event.status === "COMPLETED" ? [
+        {label:"Feedback responses",value:data.feedbackResponses},
+        {label:"Average feedback rating",value:data.averageRating === null ? "Not available" : `${data.averageRating.toFixed(1)} / 5`},
+        {label:"Feedback response rate",value:percent(data.feedbackResponseRate),note:"Responses ÷ attended"},
+      ] : []),
       {label:"Capacity",value:data.capacity ?? "Unlimited"},
       {label:"Remaining capacity",value:data.remaining ?? "Unlimited"},
       {label:"Capacity usage",value:data.capacity === null ? "Unlimited" : percent(data.utilization),note:`${data.occupied} occupied seats`},
@@ -31,6 +37,7 @@ export async function EventAnalyticsPage({ eventId, scope, range }: { eventId: s
     <StatusBreakdown counts={data.counts} />
     <h2>Registration trend period</h2><RangeLinks range={data.range} path={`${path}/analytics`} label="Registration trend period" /><p className={styles.note}>This filter changes the trend only. Event KPI counts above always show the current lifetime totals.</p>
     {data.trend && <RegistrationTrend trend={data.trend} />}
-    <section className={styles.section}><h2>How to read these metrics</h2><p>Attendance rate = ATTENDED ÷ (REGISTERED + ATTENDED). Cancelled, waitlisted, and no-show records are excluded. No eligible registrations means the rate is not available.</p><p>Capacity usage = (REGISTERED + ATTENDED) ÷ capacity. An unlimited event has no percentage. Remaining capacity never falls below zero; usage can exceed 100% if records already exceed the limit.</p><p>Attended and recorded check-ins can differ for older records without check-in timestamps. Reminder counts describe saved preferences, not messages sent. Issued ticket counts do not count page views or regenerated QR images.</p></section>
+    {data.event.status === "COMPLETED" && <Link href={`${path}/feedback`}>View private feedback insights</Link>}
+    <section className={styles.section}><h2>How to read these metrics</h2><p>Attendance rate = ATTENDED ÷ (REGISTERED + ATTENDED + NO_SHOW). Cancelled and waitlisted records are excluded. No eligible registrations means the rate is not available. Feedback response rate = responses ÷ ATTENDED; zero attended means not available.</p><p>Capacity usage = (REGISTERED + ATTENDED) ÷ capacity. An unlimited event has no percentage. Remaining capacity never falls below zero; usage can exceed 100% if records already exceed the limit.</p><p>Attended and recorded check-ins can differ for older records without check-in timestamps. Reminder counts describe saved preferences, not messages sent. Issued ticket counts do not count page views or regenerated QR images.</p></section>
   </Container></main>;
 }
