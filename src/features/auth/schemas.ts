@@ -11,3 +11,9 @@ export const signUpSchema = signInSchema.extend({
 });
 export type SignInInput = z.infer<typeof signInSchema>;
 export type SignUpInput = z.infer<typeof signUpSchema>;
+export const emailRequestSchema = z.object({ email });
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1).max(512),
+  newPassword: signUpSchema.shape.password,
+  confirmPassword: z.string(),
+}).refine(value => value.newPassword === value.confirmPassword, { path: ["confirmPassword"], message: "Passwords must match." });

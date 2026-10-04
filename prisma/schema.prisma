@@ -33,6 +33,8 @@ model User {
   name          String
   email         String   @unique
   emailVerified Boolean  @default(false)
+  // Existing users are grandfathered by the migration; new users must verify.
+  verificationRequired Boolean @default(true)
   image         String?
   createdAt     DateTime @default(now()) @db.Timestamptz(3)
   updatedAt     DateTime @updatedAt @db.Timestamptz(3)

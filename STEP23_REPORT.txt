@@ -1,0 +1,89 @@
+NEXORA STEP 23 — PRODUCTION EMAIL VERIFICATION + PASSWORD RESET
+
+1. Files created
+- prisma/migrations/20261004000000_auth_email_lifecycle/migration.sql
+- src/app/(public)/forgot-password/page.tsx
+- src/app/(public)/reset-password/page.tsx
+- src/app/(public)/verify-email/page.tsx
+- src/features/auth/components/lifecycle-form.tsx
+- src/features/auth/server/lifecycle-rate-limit.ts
+- src/lib/email/auth-template.ts
+- src/services/email/authentication.ts
+- tests/auth-lifecycle.test.mjs
+- tests/auth-policy.test.mjs
+- tests/auth-lifecycle-runtime.mjs
+- tests/support/mock-auth-email.mjs
+- tests/support/verified-regression-users.mjs
+- STEP23_REPORT.txt
+Generated, ignored evidence is in artifacts/step23/.
+
+2. Files changed
+next.config.ts; package.json; prisma/schema.prisma; src/app/(public)/sign-in/page.tsx; src/app/api/auth/[...all]/route.ts; src/features/auth/components/auth-form.tsx; src/features/auth/components/auth.module.css; src/features/auth/errors.ts; src/features/auth/schemas.ts; src/features/auth/server/auth.ts; src/features/auth/server/session.ts; src/features/attendees/server/actions.ts; src/features/events/reminders/actions.ts; src/features/events/server/content-actions.ts; src/features/follows/server/service.ts; src/features/notifications/server/service.ts; src/features/organizations/team/actions.ts; src/features/participation/server/service.ts; src/features/post-event/actions.ts; src/features/tickets/server/actions.ts; tests/all-runtime-suite.mjs; tests/attendees.test.mjs; tests/follow-notification.test.mjs; tests/participation.test.mjs; tests/support/mock-resend.mjs; tests/transactional-email.test.mjs.
+
+3. Schema changes
+User.verificationRequired Boolean @default(true). No parallel credential/token models. Existing Verification and RateLimit tables are reused.
+
+4. Migration result
+20261004000000_auth_email_lifecycle applied successfully to Neon. Fourteen migrations are applied; Prisma reports the database is up to date. The migration adds the flag with false for existing users, then changes the default to true for future accounts. It does not alter emailVerified, credential hashes, sessions, or user timestamps.
+
+5. Better Auth verification integration
+Exact installed Better Auth 1.7.7 implementation and types were inspected. emailVerification.sendVerificationEmail bridges to the centralized email service. sendOnSignUp=true, sendOnSignIn=false, expiresIn=86400, autoSignInAfterVerification=false. Better Auth validates HS256 signed verification JWTs and updates emailVerified server-side. No query parameter supplies a trusted user identity.
+
+6. Verification-email behavior
+New signups receive a branded HTML and plain-text email titled "Verify your Nexora email", with a Verify email CTA, fallback URL, 24-hour expiry note and ignore/private-link security note. Signup displays Check your email and resend/sign-in options. Native signup can create a session; authentication alone does not grant new unverified accounts application access.
+
+7. Resend-verification behavior
+Public email-identified flow on /verify-email and signup confirmation. Email is normalized and validated. Cookie context is removed so an unrelated signed-in identity cannot affect the public response. The submitted email is passed to Better Auth's supported sendVerificationEmail endpoint. All existing, nonexistent, already verified, throttled and provider-failure cases have the same generic response. The UI applies a 60-second resend cooldown; PostgreSQL enforces the actual limits.
+
+8. Password-reset architecture
+/forgot-password calls supported requestPasswordReset. The email's native /api/auth/reset-password/:token callback validates the token and redirects to /reset-password. The new-password form validates confirmation and the existing password policy before supported resetPassword changes credentials. Success clears the token-bearing history entry and redirects to /sign-in?reset=success with confirmation copy. Account.password is never written by application code.
+
+9. Reset-email behavior
+"Reset your Nexora password" subject; branded HTML and plain text; one reset CTA, fallback URL, one-hour expiry note, private-link and ignore-if-not-requested copy. Both auth callbacks use src/services/email/authentication.ts -> src/lib/email/transport.ts. No Resend client is created in auth UI or callbacks.
+
+10. Password policy
+Unchanged: minimum 12, maximum 128 characters; no forced complexity. Exact password whitespace is preserved. Confirmation must match. Both browser schema and server boundary validate; Better Auth independently enforces length and owns hashing.
+
+11. Expiration/reuse protection
+Verification: signed JWT, 24 hours; repeat verification is intentionally idempotent, not strictly single-use. Already-verified users return safe success; expired/invalid signatures fail.
+Reset: one hour, cryptographically generated Better Auth token; verification.storeIdentifier="hashed" stores a SHA-256 token identifier, not the raw token. Better Auth's transaction-backed consumeVerificationValue consumes once, including under concurrent reset attempts, and rejects expiration. Verification cleanup is disabled to avoid unrelated expired-row deletion during auth reads; expired rows cannot authenticate. Native reset-callback rate limiting is disabled ONLY for its token-bearing path and replaced with a PostgreSQL IP-only bucket, preventing raw tokens entering RateLimit keys.
+
+12. Session behavior after reset
+revokeSessionsOnPasswordReset=true. Runtime tests confirmed every persisted session for the disposable reset user was deleted. Cookie caching remains disabled. Old password fails; new password succeeds. Reset does not automatically mark an email verified, so new unverified accounts still need verification before application access.
+
+13. Existing-user compatibility policy
+Better Auth requireEmailVerification remains false, preserving supported password sign-in for existing users. Newly created users have an input:false server-controlled verificationRequired flag. requireUser redirects new unverified accounts to /verify-email?required=1; getAuthorizedUser rejects them at mutation boundaries. Organization/event creation, team/invitation actions, content, attendance, tickets, reminders, participation, follows and notifications use these guards. Existing users with verificationRequired=false retain their legitimate access. The existing Neon account was unverified and is still unverified and usable; it was not falsely marked verified. No mass credential or emailVerified migration occurred.
+
+14. Rate-limit protections
+Persistent PostgreSQL RateLimit, atomic ON CONFLICT updates. HMAC-SHA256 identities use AUTH_SECRET so raw emails are not stored in keys. Recovery/resend: per flow, 1 request/email/60 seconds, 5/email/hour, shared 20/IP/hour across email flows. Signup also uses these buckets plus existing Better Auth 3/IP/minute. Supported Better Auth password-reset POST limit: 5/IP/minute. Reset callback: 30/IP/minute, hashed IP key with no token. Better Auth resolves/normalizes IPs; no guessed proxy ranges or disabled tracking. Render's trusted forwarded-IP configuration must remain correct. A missing trustworthy IP shares a conservative unknown bucket.
+
+15. Enumeration/privacy protections
+"If an account exists for that email, we sent instructions." No user-not-found/provider diagnostics in public recovery responses. A uniform 10-second response floor covers the centralized transport's 8-second timeout under normal database latency; extreme infrastructure delays are not claimed to be mathematically constant-time. Provider failures throw internally rather than pretending delivery succeeded. Origin must match environment-specific APP_URL for POST, cross-site Fetch Metadata is rejected, and Better Auth origin/CSRF/callback protections stay enabled. The API allowlist exposes only existing auth plus verification/reset endpoints. No passwords, tokens, API keys or auth secrets are logged. Next development incoming-request and server-action-argument logging is disabled. Referrer policy is no-referrer on auth pages and auth link responses; auth requests are no-store. Templates reuse Step22 HTML escaping and have no tracking pixels.
+
+16. Neon runtime tests
+20 final Step23 scenario groups passed. Final Step23 ledger: artifacts/step23/2b2a129f-6331-4beb-bc6a-3714a5d86b06/runtime.json. Passed: signup flag protection, unverified state, email generation, verification/update/reuse/expiry, resend cooldown and enumeration, hashed reset storage and expiry, native callback redirect and token-free rate keys, weak/mismatched password rejection, concurrent one-time reset, revoked sessions, old/new password checks, expired reset, nonexistent account, provider failure, missing configuration, cross-origin/unauthorized mutation rejection, untrusted callback rejection, independently enforced hourly limits, privacy and cleanup. Full non-RateLimit database fingerprints match before/after. Existing core regressions: 15 suites passing, recorded in artifacts/step23/core-regressions.json.
+Specialist regressions PASS: reminder-scheduler-runtime, post-event-runtime, organization-team-runtime, transactional-email-runtime. Existing reminder-scheduler-readonly diagnostics also PASS. All specialist suites include successful cleanup/privacy checks; feedback/team/email include their existing browser suites. Evidence: artifacts/step23/special-regressions.json and the corresponding logs.
+
+17. Browser tests
+Final-build layout matrix: sign-in, signup, forgot-password, reset-password and expired verification at 1440, 390 and 320px; all 15 measurements show no horizontal overflow. Checked signup Check your email, resend action/generic response, unverified sign-in routing, forgot-password link/form/generic response, reset show/hide controls, keyboard Tab and visible solid focus outline, invalid/expired result copy, and success-result presentation. Screenshots and measurements: artifacts/step23/browser-layout.json, verification-mobile.jpg, recovery-desktop.jpg.
+Limit: browser credential-change policy requires user handoff before entering a replacement password. Actual browser matching-error interaction and final successful reset submission/redirect remain manual; server/API matching, policy, password change and revocation are fully verified. Success redirect implementation is included.
+
+18. Cleanup result
+Step23 disposable users, accounts, sessions, reset verification rows, custom rate keys and normalized native IP rate rows were cleaned and checked. Browser fixture accounts were cleaned. Exact interrupted regression fixture rows were recovered from their run ledger and removed; one original business user remained. Content regression was rerun alone after a concurrent browser-fixture cleanup invalidated its first fingerprint comparison; all behavior and cleanup checks now pass. No real external email was sent.
+Final audit PASS (artifacts/step23/final-audit.json): 1 original user, 1 original credential account, 4 original sessions, 0 disposable users, 0 verification rows and 0 Step23 lifecycle rate rows. Original user emailVerified=false and verificationRequired=false are preserved.
+
+19. Quality results
+137/137 unit tests pass. npm run typecheck: PASS. npm run lint: PASS, zero warnings. npm run build: PASS. npx prisma validate: PASS. npx prisma generate: PASS. npm run db:status: PASS, up to date. Core runtime suites: 15/15 PASS after isolated content rerun. Specialist runtime suites: 4/4 PASS; reminder read-only diagnostics PASS.
+
+20. Render deployment steps
+No deployment was performed. Deploy this reviewed code to the existing Render service. Reuse RESEND_API_KEY, EMAIL_FROM, optional EMAIL_REPLY_TO, PUBLIC_APP_URL, APP_URL and AUTH_SECRET. No new environment variable or provider is required. Production APP_URL and PUBLIC_APP_URL should both be https://nexora-htc7.onrender.com (or the same actual production custom origin). Keep local APP_URL=http://localhost:3000; local sandbox sending follows existing Step22 rules. Production EMAIL_FROM must use your verified custom domain; Resend checks its verification, and the shared sandbox sender is rejected by the existing production config. Keep normal Prisma generate/build/start commands and prisma migrate deploy in the release path; the migration already applied to this Neon database is idempotently recognized. Do not enable test preloads/NODE_OPTIONS in Render. Check public recovery routes and verification gating after deployment.
+
+21. User actions and manual real-email flow
+Before any real external test send, explicitly approve the real recipient and flow. After deployment with a verified custom sender: sign up with your real email, confirm Check your email, receive/verify the email, sign in, request forgot-password, receive reset email, enter matching new passwords yourself, confirm old-password rejection and new-password sign-in, and check old sessions are signed out. Also manually check mismatched confirmation and the final browser redirect. External email sending was not attempted. No Step24 work is included.
+
+REVALIDATION — 2026-10-04
+The existing Step23 implementation was audited against the installed Better Auth 1.7.7 source and relevant bundled Next.js 16.3.8 guides. No application-code changes were necessary during this revalidation.
+Fresh Neon lifecycle run: artifacts/step23/566627a7-c8d9-4a44-9a93-32e77713054d/runtime.json. All 20 scenario groups PASS; cleanupVerified=true, existingBusinessUsersUnchanged=true, realEmailSent=false. The original account remains unverified and grandfathered. Network-restricted attempts failed before any fixture was created; the approved network-enabled run completed successfully.
+Fresh quality checks: 137/137 unit tests PASS; typecheck, lint, build, Prisma validate and generate PASS. Network-enabled db:status PASS: fourteen migrations, database schema up to date. git diff --check PASS. Existing core and specialist regression evidence above remains applicable; application code is unchanged since those runs.
+Fresh in-app browser checks: the same five auth pages at 1440, 390 and 320px, all fifteen measurements without horizontal overflow. Empty forgot-password submission displays an accessible validation error. Show passwords toggles input type to text; keyboard Tab reaches confirmation with a solid visible focus outline. Temporary browser tab and local mocked server were closed.
+Browser credential-entry limitation comes from the browser tool's confirmation policy: "Changing a password or other authentication credential: Ask the user to take over before any new credential is entered". Accordingly, entering replacement passwords, interacting with mismatched populated confirmation fields, and submitting the final browser reset remain user-run manual checks. Server/API password-change and mismatch behavior are fully verified. Real external email remains pending explicit approval.

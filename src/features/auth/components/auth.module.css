@@ -3,7 +3,7 @@
 .mark { display: grid; place-items: center; width: 3rem; height: 3rem; border-radius: .8rem; color: white; background: var(--gradient-brand); margin-bottom: 1.5rem; }
 .eyebrow { font-size: .6rem; letter-spacing: .13em; font-weight: 650; color: #70618c; margin-bottom: .7rem; }
 .card h1, .dashboard h1 { font-size: clamp(2rem, 5vw, 2.7rem); letter-spacing: -.06em; line-height: 1.1; font-weight: 700; text-wrap: balance; }
-.intro { color: #665e76; font-size: .85rem; line-height: 1.7; margin-block: .9rem 1.7rem; }
+.intro { color: #665e76; font-size: .85rem; line-height: 1.7; margin-block: .9rem 1.7rem; overflow-wrap: anywhere; }
 .fields { border: 0; padding: 0; display: grid; gap: 1.1rem; min-width: 0; }
 .field { display: grid; gap: .45rem; min-width: 0; }
 .field label { font-size: .8rem; font-weight: 600; color: #42384f; }
@@ -28,3 +28,5 @@
 .dashboardGrid a { display: inline-flex; align-items: center; gap: .5rem; min-height: 2.75rem; margin-top: .7rem; color: #683db3; font-size: .8rem; }
 @media (max-width: 600px) { .dashboardGrid { grid-template-columns: 1fr; } .page { padding-inline: 1rem; } }
 @media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
+
+.visibility { display:flex; align-items:center; gap:.5rem; min-height:2.75rem; color:#683db3; cursor:pointer; }

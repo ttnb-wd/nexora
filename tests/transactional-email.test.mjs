@@ -153,6 +153,6 @@ test('public preview omits recipient and provider metadata; logs contain no keys
   const db=memoryDb(),issued=await inviteTeamMember(db,'actor','team',input); await deliverIssuedInvitation(db,'actor','team',issued,'https://app.example.test');
   assert.deepEqual(Object.keys(await invitationPreview(db,issued.token)).sort(),['expiresAt','name','role','state']);
   const serialized=JSON.stringify(logs); for(const secret of [process.env.RESEND_API_KEY,input.email,issued.token,'<script>','raw sensitive']) assert.ok(!serialized.includes(secret));
-  const actions=readFileSync('src/features/organizations/team/actions.ts','utf8'); assert.ok(actions.includes('getCurrentUser()')); assert.ok(!actions.includes('resend.emails'));
+  const actions=readFileSync('src/features/organizations/team/actions.ts','utf8'); assert.ok(actions.includes('getAuthorizedUser()')); assert.ok(!actions.includes('resend.emails'));
   const page=readFileSync('src/app/(protected)/organizer/[organizationSlug]/team/page.tsx','utf8'); assert.ok(page.includes('allowedTeamRoles(membership.role).length ?')); assert.ok(!page.includes('emailProviderMessageId'));
 });

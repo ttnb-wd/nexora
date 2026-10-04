@@ -1,6 +1,6 @@
 import "server-only";
 import { getDb } from "@/lib/db";
-import { getCurrentUser, requireUser } from "@/features/auth/server/session";
+import { getAuthorizedUser, getCurrentUser, requireUser } from "@/features/auth/server/session";
 import { organizationSlugSchema } from "@/features/organizations/slug";
 import { mapPublicOrganization, publicOrganizationSelect } from "@/features/organizations/server/public-organization-mapper";
 import type { ParticipationResult } from "@/features/participation/rules";
@@ -9,7 +9,7 @@ export async function mutateFollow(input: unknown, following: boolean): Promise<
   const parsed = organizationSlugSchema.safeParse(input);
   if (!parsed.success) return { ok: false, message: "This organization is no longer available." };
   try {
-    const user = await getCurrentUser();
+    const user = await getAuthorizedUser();
     if (!user) return { ok: false, message: "Please sign in to continue.", signIn: `/sign-in?returnTo=${encodeURIComponent(`/companies/${parsed.data}`)}` };
     const organization = await getDb().organization.findUnique({ where: { slug: parsed.data }, select: { id: true } });
     if (!organization) return { ok: false, message: "This organization is no longer available." };

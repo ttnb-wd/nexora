@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 registerHooks({resolve(specifier,context,nextResolve){
  if(specifier==='server-only')return {url:'data:text/javascript,export%20default%20{}',shortCircuit:true};
- const stubs={ '@/lib/db':'export const getDb=()=>globalThis.participationDb', '@/features/auth/server/session':'export const getCurrentUser=async()=>globalThis.participationUser; export const requireUser=async()=>{if(!globalThis.participationUser)throw Error("Sign in");return globalThis.participationUser}', '@/features/events/server/authorization':'export const requireEventAccess=async(id,scope)=>{globalThis.accessCalls.push({id,scope}); if(!globalThis.allowManager)throw Error("Denied");return {event:{id}}}' };
+ const stubs={ '@/lib/db':'export const getDb=()=>globalThis.participationDb', '@/features/auth/server/session':'export const getCurrentUser=async()=>globalThis.participationUser; export const getAuthorizedUser=getCurrentUser; export const requireUser=async()=>{if(!globalThis.participationUser)throw Error("Sign in");return globalThis.participationUser}', '@/features/events/server/authorization':'export const requireEventAccess=async(id,scope)=>{globalThis.accessCalls.push({id,scope}); if(!globalThis.allowManager)throw Error("Denied");return {event:{id}}}' };
  if(stubs[specifier])return {url:`data:text/javascript,${encodeURIComponent(stubs[specifier])}`,shortCircuit:true};
  if(specifier.startsWith('@/')) {const path=new URL(`../src/${specifier.slice(2)}.ts`,import.meta.url);if(existsSync(path))return nextResolve(path.href,context);}
  return nextResolve(specifier,context);

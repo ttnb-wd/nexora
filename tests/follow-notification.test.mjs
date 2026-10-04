@@ -7,7 +7,7 @@ registerHooks({resolve(specifier,context,nextResolve){
  if(specifier==='server-only')return {url:'data:text/javascript,export%20default%20{}',shortCircuit:true};
  const stubs={
   '@/lib/db':'export const getDb=()=>globalThis.socialDb',
-  '@/features/auth/server/session':'export const getCurrentUser=async()=>globalThis.socialUser; export const requireUser=async()=>{if(!globalThis.socialUser)throw Error("Sign in");return globalThis.socialUser}',
+  '@/features/auth/server/session':'export const getCurrentUser=async()=>globalThis.socialUser; export const getAuthorizedUser=getCurrentUser; export const requireUser=async()=>{if(!globalThis.socialUser)throw Error("Sign in");return globalThis.socialUser}',
   '@/features/events/server/authorization':'export const requireEventAccess=async()=>{throw Error("Denied")}',
  };
  if(stubs[specifier])return {url:`data:text/javascript,${encodeURIComponent(stubs[specifier])}`,shortCircuit:true};

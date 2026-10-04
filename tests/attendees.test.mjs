@@ -5,7 +5,7 @@ import test from 'node:test';
 registerHooks({resolve(specifier,context,nextResolve){
  const stubs={
   '@/lib/db':'export const getDb=()=>globalThis.attendeeDb',
-  '@/features/auth/server/session':'export const getCurrentUser=async()=>globalThis.attendeeUser',
+  '@/features/auth/server/session':'export const getCurrentUser=async()=>globalThis.attendeeUser; export const getAuthorizedUser=getCurrentUser',
   'next/cache':'export const revalidatePath=(...args)=>globalThis.attendeeRevalidations.push(args)',
  };
  if(stubs[specifier])return {url:`data:text/javascript,${encodeURIComponent(stubs[specifier])}`,shortCircuit:true};

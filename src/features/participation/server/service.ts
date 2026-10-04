@@ -1,6 +1,6 @@
 import "server-only";
 import { getDb } from "@/lib/db";
-import { getCurrentUser, requireUser } from "@/features/auth/server/session";
+import { getAuthorizedUser, getCurrentUser, requireUser } from "@/features/auth/server/session";
 import { requireEventAccess } from "@/features/events/server/authorization";
 import { mapPublicEvent, publicEventSelect } from "@/features/events/server/public-event-mapper";
 import { participationSlugSchema, eventSignInPath, registrationClosedReason, occupiedRegistrationStatuses, type ParticipationResult, type Availability } from "../rules";
@@ -15,7 +15,7 @@ export async function mutateParticipation(input: unknown, kind: "join" | "cancel
   if (!parsed.success) return { ok: false, message: "This event is no longer available." };
   const slug = parsed.data;
   try {
-    const user = await getCurrentUser();
+    const user = await getAuthorizedUser();
     if (!user) return { ok: false, message: "Please sign in to continue.", signIn: eventSignInPath(slug) };
     return await getDb().$transaction(async (tx) => {
       // Parameterized row lock serializes all participation writes for this event. Event

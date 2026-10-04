@@ -1,13 +1,13 @@
 "use server";
 import { revalidatePath } from "next/cache";
-import { getCurrentUser } from "@/features/auth/server/session";
+import { getAuthorizedUser } from "@/features/auth/server/session";
 import { getDb } from "@/lib/db";
 import { mutateAttendance } from "./service";
 import type { AttendeeActionState } from "../schemas";
 
 async function run(eventId: string, scope: string | null, form: FormData, operation: "check-in" | "undo"): Promise<AttendeeActionState> {
   try {
-    const user = await getCurrentUser();
+    const user = await getAuthorizedUser();
     if (!user) return { message: "Sign in to manage event attendees." };
     if (operation === "undo" && form.get("confirm") !== "yes") return { message: "Confirm that you want to undo this check-in." };
     const result = await mutateAttendance(getDb(), user.id, { eventId, scope, registrationId: form.get("registrationId") }, operation);

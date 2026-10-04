@@ -13,5 +13,11 @@ export const getCurrentUser = cache(async () => {
 export async function requireUser() {
   const user = await getCurrentUser();
   if (!user) redirect("/sign-in");
+  if (user.verificationRequired && !user.emailVerified) redirect("/verify-email?required=1");
   return user;
+}
+/** Mutation entry points must never treat an unverified new account as authorized. */
+export async function getAuthorizedUser() {
+  const user = await getCurrentUser();
+  return user && (!user.verificationRequired || user.emailVerified) ? user : null;
 }

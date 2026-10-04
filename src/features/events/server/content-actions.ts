@@ -1,13 +1,13 @@
 "use server";
 import { revalidatePath } from "next/cache";
-import { getCurrentUser } from "@/features/auth/server/session";
+import { getAuthorizedUser } from "@/features/auth/server/session";
 import { getDb } from "@/lib/db";
 import type { ContentKind, ContentState } from "../content-schemas";
 import { mutateEventContent } from "./content-service";
 
 async function run(eventId: string, scope: string | null, kind: ContentKind, operation: "create" | "update" | "delete" | "move", form: FormData): Promise<ContentState> {
   try {
-    const user = await getCurrentUser();
+    const user = await getAuthorizedUser();
     if (!user) return { message: "Sign in to manage event content." };
     const result = await mutateEventContent(getDb(), user.id, eventId, scope, kind, operation, form);
     if (result.ok) {

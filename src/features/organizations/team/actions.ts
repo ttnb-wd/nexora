@@ -1,7 +1,7 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/features/auth/server/session";
+import { getAuthorizedUser } from "@/features/auth/server/session";
 import { getDb } from "@/lib/db";
 import { createAndEmailInvitation } from "./delivery";
 import { allowTeamRequest } from "./rate-limit";
@@ -9,7 +9,7 @@ import { changeTeamRole, removeTeamMember, respondToInvitation, revokeTeamInvita
 import type { TeamActionState } from "./types";
 
 export async function manageOrganizationTeam(slug: string, _previous: TeamActionState, form: FormData): Promise<TeamActionState> {
-  const user = await getCurrentUser();
+  const user = await getAuthorizedUser();
   if (!user) return { message: "Sign in to manage your team." };
   const db = getDb();
   const operation = form.get("operation"), id = String(form.get("id") ?? ""), expectedRole = String(form.get("expectedRole") ?? "");
@@ -30,7 +30,7 @@ export async function manageOrganizationTeam(slug: string, _previous: TeamAction
 }
 
 export async function answerOrganizationInvitation(token: string, _previous: TeamActionState, form: FormData): Promise<TeamActionState> {
-  const user = await getCurrentUser();
+  const user = await getAuthorizedUser();
   if (!user) return { message: "Sign in to accept invitation" };
   const response = form.get("response");
   if (response !== "accept" && response !== "decline") return { message: "Choose accept or decline." };
