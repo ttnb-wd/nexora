@@ -1,0 +1,79 @@
+NEXORA STEP 24 — USER PROFILE + ACCOUNT SETTINGS
+
+1. Files created
+prisma/migrations/20261004010000_user_account_settings/migration.sql
+src/app/(protected)/dashboard/settings/page.tsx
+src/app/api/account/route.ts
+src/features/account/schemas.ts
+src/features/account/types.ts
+src/features/account/session-display.ts
+src/features/account/server/service.ts
+src/features/account/server/security-lock.ts
+src/features/account/components/account-settings.tsx
+src/features/account/components/settings.module.css
+tests/account-settings.test.mjs
+tests/account-settings-runtime.mjs
+tests/support/account-browser-fixture.mjs
+tests/support/account-settings-audit.mjs
+STEP24_REPORT.txt
+
+2. Files changed
+package.json; prisma/schema.prisma; src/app/(protected)/dashboard/page.tsx; src/app/(public)/sign-in/page.tsx; src/features/auth/components/account-menu.tsx; src/features/auth/return-path.ts; src/features/auth/server/lifecycle-rate-limit.ts; tests/transactional-email-runtime.mjs.
+The Step22 runtime harness now has an optional STEP22_SKIP_BROWSER flag, consistent with existing specialist harnesses; its non-browser path still verifies acceptance of the mock-emailed invitation. Production code never reads that test flag.
+
+3. Schema changes
+User.timezone String? @db.VarChar(100). Existing users retain null. No new authentication, session or credential model; no prior migration was modified.
+
+4. Migration result
+20261004010000_user_account_settings applied to Neon successfully. Prisma reports 15 migrations and the schema up to date. Existing names, verification flags, credentials, sessions and business records are not migrated or mass-updated.
+
+5. Settings route/structure
+/dashboard/settings, with Profile, Email, Password / Security, Sessions and Preferences sections. Linked from the dashboard and authenticated account menu, including its existing mobile presentation. Authentication required, but unverified users may access their own account security/settings. Step23's verified-email requirements for critical business actions remain intact. Sign-in return paths explicitly allow settings, and the reauthenticate=1 flag lets an already-signed-in user renew session freshness only when returning to settings.
+
+6. Profile-update behavior
+Display name only, trimmed, 2–80 characters, safely rendered by React. Better Auth 1.7.7 updateUser updates the session-derived account and forwards its native cookies. Unknown/forged identity or security fields are rejected. Repeated profile saves use normal last-write-wins behavior. Avatar URL editing/storage is deferred: the existing app uses initials and has no established safe image storage/rendering system.
+
+7. Email verification state
+Current private email and server-read Verified / Not verified state. Unverified users get the existing Step23 resend form and persistent cooldown/abuse protections. No email-address change. Public recovery still uses generic enumeration-safe responses. No real external email was sent.
+
+8. Password-change behavior
+Better Auth 1.7.7 changePassword with currentPassword, newPassword and revokeOtherSessions=true. Current password required; existing 12–128 character policy and exact password whitespace preserved; confirmation must match. Wrong current password gets a safe message. Application code never writes Account.password or performs its own password hashing.
+Installed behavior: Better Auth deletes ALL old persisted sessions, including the old current session, and creates a new session/cookie for this browser. The account endpoint forwards only native HttpOnly cookies, discarding the native JSON token/user payload. Runtime tests verified old cookies fail, replacement cookie works, old password fails and new password succeeds. No automatic email verification occurs.
+Credential/session mutations use a per-account PostgreSQL advisory lock and re-read authentication after acquiring it, so duplicate credential submissions cannot use stale authorization. A separate pool of at most two short-lived lock connections avoids exhausting the existing five-connection application pool; maximum per-process database pool capacity is seven. Better Auth remains owner of all security mutations.
+
+9. Session management
+Supported listSessions, revokeSession and revokeOtherSessions APIs. Settings DTO includes only session ID, current marker, created/updated/expiry timestamps and coarse browser/OS summary. No IP, raw user agent, bearer token, access token or refresh token appears in settings props/JSON. A client session ID is resolved server-side within the current user's active sessions before its token is passed internally to Better Auth. Foreign/missing/already-revoked IDs receive the same safe idempotent result; current-session revocation is rejected with a Sign out instruction. Checkboxes confirm one-session/all-other-session revocation. Native listSessions freshness is preserved (default 24 hours); stale session lists prompt supported sign-in renewal.
+
+10. Preferences
+Optional IANA timezone, with available timezone suggestions and UTC. Blank clears it to null; unknown names and raw offsets are rejected. Stored for future display preferences only. Existing event timezone ownership, scheduling, reminders and motion preferences remain unchanged.
+
+11. Authorization/privacy
+Every mutation derives its owner from authoritative Better Auth session data. Strict request schemas, bounded 16KB bodies, exact environment APP_URL origin and cross-site Fetch Metadata rejection. Native origin/CSRF protections remain enabled; settings responses are no-store/no-referrer. Safe errors, no provider/Prisma diagnostics, no credential logging. Public event creator projection still selects only name, and existing public organization projections expose no account email/security data. Name is public wherever already used; email, timezone and session/account data are private. Existing auth get-session behavior is not replaced by a parallel system.
+
+12. Rate limits
+Persistent RateLimit atomic buckets, HMAC identities using AUTH_SECRET. Password changes: 5 attempts/account/15 minutes and 10/IP/15 minutes, including success and failed current-password attempts. Session mutations: 30/account/15 minutes and 60/IP/15 minutes. No restrictive limiter on ordinary profile/preference saves. Step23 verification: 60-second email cooldown, 5/email/hour, 20/IP/hour. Passwords/tokens never appear in rate keys. IP resolution uses the existing Better Auth proxy configuration.
+
+13. Existing-user compatibility
+Nullable timezone; unchanged Step23 grandfathering. Existing unverified users keep legitimate access and can manage their own settings. New unverified users can manage their own profile/security and resend verification but remain gated from protected business activity. No production user was re-verified or had credentials/business data modified for testing.
+
+14. Neon runtime results
+Initial account runtime/browser fixture ledger: artifacts/step24/afe83f7d-551c-46d4-bbca-0bb285db1e53/runtime.json. All 19 initial scenario groups passed, including cleanup and unchanged non-RateLimit business-table fingerprints. Coverage includes profile ownership/validation, verification resend/state, safe session metadata, foreign/current-session protections, duplicate revocation, revoke-all-others, wrong/weak/mismatched passwords, credential change, cookie rotation, concurrent password submission, timezone, persistent limits, origin checks and log privacy. Follow-up runtime adds repeated profile saves and stale-session freshness coverage; final results are recorded below after completion.
+
+15. Browser results
+In-app browser verified account-menu and dashboard links; empty-name error; profile save and confirmation; Verified and Not verified states with resend option; password visibility; current/other sessions; missing-confirmation error; confirmed one-session and all-other-session revocation; timezone persistence; keyboard Tab and solid visible focus outline. Desktop 1440px, 390px and 320px: all five sections present, no horizontal overflow. Evidence: artifacts/step24/browser-layout.json, settings-desktop.png and settings-mobile.png.
+Limitation: the browser tool's confirmation policy says "Changing a password or other authentication credential: Ask the user to take over before any new credential is entered". Therefore populated new-password/mismatch interaction and final browser password submission are manual user checks; server/API versions are fully tested. Older specialist browser suites are not rerun through their legacy browser drivers; Step24 UI was tested through the supported browser tool.
+
+16. Cleanup
+Initial Step24 disposable users, accounts, sessions and known rate rows cleaned successfully; original business fingerprints unchanged. Temporary browser tab closed and viewport restored; local mocked server stopped. Final audit is recorded below after sequential regressions and follow-up tests finish.
+
+17. Quality
+142/142 unit tests passed. Typecheck, lint (zero warnings), production build, Prisma validate and generate passed. Migration status: up to date, 15 migrations. Sequential existing Neon/runtime regression results and final audit are recorded below after completion.
+
+18. User actions
+Deploy reviewed code to the existing Render service with normal Prisma generate/build/start and prisma migrate deploy in the release path. Reuse existing environment variables; no new secrets/provider required. This Neon migration is already applied. Verify production APP_URL remains the actual HTTPS origin. Manually enter and submit the password-change form, check mismatch feedback, and confirm other browsers sign out while the current browser stays signed in. Real external email still requires separate explicit approval. No Step25 work is included.
+
+FINAL VALIDATION — 2026-10-04
+Final Step24 runtime: artifacts/step24/0a91f0ac-1eec-49f7-98fd-a1c8aeef1a6b/runtime.json. All 21 scenario groups PASS, cleanupVerified=true, existingBusinessRecordsUnchanged=true, realEmailSent=false. This run includes repeated profile saves and native stale-session freshness/sign-in renewal.
+All 15 existing core suites PASS (artifacts/step24/core-regressions.json). All four specialist suites PASS with cleanupVerified=true and existingRecordsUnchanged=true (artifacts/step24/special-regressions.json): reminder scheduler, post-event feedback, organization team, transactional email. Legacy specialist browser drivers were explicitly skipped; their server/API tests passed, and Step24 browser testing used the in-app browser.
+Step23 regression: all 20 lifecycle scenario groups PASS (artifacts/step23/fff43174-14ef-48a2-8384-37cc03867c46/runtime.json), including successful cleanup and unchanged existing users. Reminder read-only diagnostics PASS. Final migration status PASS: 15 migrations, up to date.
+Final cleanup audit PASS (artifacts/step24/final-audit.json): zero Step24 disposable users and zero account settings rate-limit rows. The database retains two existing users, two credential accounts, three sessions and one pre-existing verification row; these non-test records were preserved rather than mass-deleted. Every runtime suite's business-data fingerprint/cleanup check passed. No real external email was sent. Final lint and git diff --check PASS. Deployment and manual browser credential entry remain user actions; no Step25 work was performed.

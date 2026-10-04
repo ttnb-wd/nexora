@@ -48,7 +48,9 @@
     "test:post-event": "node --test tests/post-event.test.mjs",
     "test:post-event:runtime": "node tests/post-event-runtime.mjs",
     "test:auth:lifecycle": "node --test tests/auth-lifecycle.test.mjs tests/auth-policy.test.mjs",
-    "test:auth:lifecycle:runtime": "node tests/auth-lifecycle-runtime.mjs"
+    "test:auth:lifecycle:runtime": "node tests/auth-lifecycle-runtime.mjs",
+    "test:account": "node --test tests/account-settings.test.mjs",
+    "test:account:runtime": "node tests/account-settings-runtime.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

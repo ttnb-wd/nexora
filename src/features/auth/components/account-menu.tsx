@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronDown, LogOut, LayoutDashboard, Building2 } from "lucide-react";
+import { ChevronDown, LogOut, LayoutDashboard, Building2, Settings } from "lucide-react";
 import { authClient } from "../client";
 import { authErrorMessage } from "../errors";
 import styles from "./account-menu.module.css";
@@ -31,6 +31,6 @@ export function AccountMenu({ user, onNavigate }: { user: AccountIdentity; onNav
   const initials = user.name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "N";
   return <details ref={details} className={styles.menu} onKeyDown={(event) => { if (event.key === "Escape") { event.preventDefault(); details.current?.removeAttribute("open"); details.current?.querySelector("summary")?.focus(); } }}>
     <summary aria-label={`Account for ${user.name}`}><span className={styles.avatar} aria-hidden="true">{initials}</span><span className={styles.name}>{user.name}</span><ChevronDown size={14} aria-hidden="true" /></summary>
-    <div className={styles.dropdown}><p>{user.email}</p><Link href="/dashboard" onClick={close}><LayoutDashboard size={16} aria-hidden="true" />Dashboard</Link><Link href="/organizer" onClick={close}><Building2 size={16} aria-hidden="true" />Organizer</Link><button type="button" disabled={pending} onClick={signOut}><LogOut size={16} aria-hidden="true" />{pending ? "Signing out…" : "Sign out"}</button>{error && <p role="alert" className={styles.error}>{error}</p>}</div>
+    <div className={styles.dropdown}><p>{user.email}</p><Link href="/dashboard" onClick={close}><LayoutDashboard size={16} aria-hidden="true" />Dashboard</Link><Link href="/dashboard/settings" onClick={close}><Settings size={16} aria-hidden="true" />Account settings</Link><Link href="/organizer" onClick={close}><Building2 size={16} aria-hidden="true" />Organizer</Link><button type="button" disabled={pending} onClick={signOut}><LogOut size={16} aria-hidden="true" />{pending ? "Signing out…" : "Sign out"}</button>{error && <p role="alert" className={styles.error}>{error}</p>}</div>
   </details>;
 }

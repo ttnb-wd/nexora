@@ -29,3 +29,11 @@ export async function allowLifecycleRequest(email: string, ip: string, kind: "ve
 export async function allowResetCallback(ip: string) {
   return consume(ip, "reset-callback", 60000, 30);
 }
+
+export async function consumeAccountLimit(userId: string, ip: string, kind: "password" | "sessions") {
+  const allowed = await Promise.all([
+    consume(userId, `account-${kind}-user`, 900000, kind === "password" ? 5 : 30),
+    consume(ip, `account-${kind}-ip`, 900000, kind === "password" ? 10 : 60),
+  ]);
+  return allowed.every(Boolean);
+}

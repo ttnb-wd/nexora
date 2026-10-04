@@ -24,6 +24,7 @@ export default async function DashboardPage() {
       <section aria-labelledby="notifications-title"><h2 id="notifications-title">Notifications</h2><p>Updates from organizations and your event registrations.</p><Link href="/dashboard/notifications">View notifications <ArrowUpRight size={16} aria-hidden="true" /></Link></section>
     </div>
     <p className={styles.intro}><Link href="/dashboard/events">Manage your individual events <ArrowUpRight size={16} aria-hidden="true" /></Link></p>
+    <p className={styles.intro}><Link href="/dashboard/settings">Account settings <ArrowUpRight size={16} aria-hidden="true" /></Link></p>
     {membership && <p className={styles.intro}><Link href="/organizer">Manage your organizations <ArrowUpRight size={16} aria-hidden="true" /></Link></p>}
   </Container></main>;
 }

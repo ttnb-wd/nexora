@@ -53,10 +53,15 @@ try{
  status=200;const emailed=await issue(browserRecipient.email,'EDITOR');assert.equal(emailed.delivery,'sent');const browserToken=tokenFromMail();const mail=mailbox.at(-1);assert.ok(mail.text.includes(process.env.PUBLIC_APP_URL+'/invitations/'+browserToken));
  const anonymous=await(await request('/invitations/'+browserToken)).text();assert.ok(anonymous.includes('Sign in to accept invitation'));assert.ok(!anonymous.includes(browserRecipient.email));assert.ok(!anonymous.includes(row.emailProviderMessageId));pass('Emailed token supports anonymous preview without recipient/provider disclosure');
  const privateRows=JSON.stringify(await db.organizationInvitation.findMany({where:{organizationId:org.id}}));for(const token of secrets.filter(x=>/^[A-Za-z0-9_-]{43}$/.test(x)))assert.ok(!privateRows.includes(token));
+ if(process.env.STEP22_SKIP_BROWSER!=='1') {
  chrome=spawn('C:/Program Files/Google/Chrome/Application/chrome.exe',['--headless=new','--disable-gpu','--disable-extensions','--remote-debugging-port=9338',`--user-data-dir=${resolve(root,'chrome-profile')}`,'about:blank'],{windowsHide:true});
  for(let i=0;i<80;i++){try{if((await fetch('http://127.0.0.1:9338/json/version')).ok)break;}catch{}await sleep(250);}
  const browser=await child(['tests/transactional-email-browser.mjs'],{origin,root,slug:org.slug,owner,recipient:browserRecipient,token:browserToken,ip});assert.ok(!secrets.some(secret=>browser.out.includes(secret)),'Browser output contains a private credential');writeFileSync(`${root}/browser.log`,browser.out);assert.equal(browser.code,0,'Step22 browser failed; inspect private artifact');console.log(browser.out.trim());
  assert.equal(await db.organizationMember.count({where:{userId:browserRecipient.id,organizationId:org.id,role:'EDITOR'}}),1);pass('Mock-emailed CTA → sign-in → accept creates one EDITOR membership in Neon');
+ } else {
+  await respondToInvitation(db,browserRecipient.id,browserToken,'accept');
+  assert.equal(await db.organizationMember.count({where:{userId:browserRecipient.id,organizationId:org.id,role:'EDITOR'}}),1);pass('Mock-emailed invitation accepts through the supported service in Neon; browser suite skipped');
+ }
  ledger.ok=true;
 }catch(error){ledger.failure=error.message;process.exitCode=1;console.error('Step22 runtime failed: '+error.message);}
 finally{

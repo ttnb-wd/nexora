@@ -36,6 +36,7 @@ model User {
   // Existing users are grandfathered by the migration; new users must verify.
   verificationRequired Boolean @default(true)
   image         String?
+  timezone      String?  @db.VarChar(100)
   createdAt     DateTime @default(now()) @db.Timestamptz(3)
   updatedAt     DateTime @updatedAt @db.Timestamptz(3)
   sessions      Session[]
