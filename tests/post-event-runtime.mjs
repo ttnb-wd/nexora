@@ -49,7 +49,7 @@ async function invoke(name,args,actor,path='/dashboard'){
  assert.ok(result,'Action response missing');return result;
 }
 async function runChild(args,input){return new Promise((resolveChild,reject)=>{
- const child=spawn(process.execPath,args,{windowsHide:true,env:{...process.env,APP_URL:origin,PUBLIC_APP_URL:' '}});let stdout='',stderr='';
+ const child=spawn(process.execPath,args,{windowsHide:true,env:{...process.env,NODE_OPTIONS:args.some(arg=>arg.endsWith('-browser.mjs'))?'':process.env.NODE_OPTIONS,APP_URL:origin,PUBLIC_APP_URL:' '}});let stdout='',stderr='';
  child.stdout.on('data',data=>stdout+=data);child.stderr.on('data',data=>stderr+=data);child.on('error',reject);child.on('close',code=>resolveChild({code,stdout,stderr}));if(input)child.stdin.end(JSON.stringify(input));
 });}
 try{

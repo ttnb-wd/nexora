@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "test:search": "node --test tests/global-search.test.mjs",
+    "test:search:runtime": "node tests/global-search-runtime.mjs",
+    "test:search:browser": "node tests/global-search-browser.mjs",
+    "test:search:regression": "node tests/global-search-regression.mjs",
     "test:email": "node --test tests/transactional-email.test.mjs",
     "test:email:runtime": "node --import ./tests/support/mock-resend.mjs tests/transactional-email-runtime.mjs",
     "test:team": "node --test tests/organization-team.test.mjs",

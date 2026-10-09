@@ -5,12 +5,14 @@ import { spawn } from 'node:child_process';
 import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import nextEnv from '@next/env';
 import rscClient from 'next/dist/compiled/react-server-dom-turbopack/client.node.js';
+import { getIP } from 'better-auth/api';
 
 assert.equal(process.env.STEP19_DISPOSABLE_APPROVED, '1', 'Explicit Step 19 disposable-data approval required.');
 nextEnv.loadEnvConfig(process.cwd(), true);
 const { getDb } = await import('../src/lib/db.ts');
 const { selectDueReminders, processDueReminders, reminderDeliveryKey, reminderMessage } = await import('../src/features/events/reminders/scheduler.ts');
 const { handleReminderJob } = await import('../src/features/events/reminders/job-request.ts');
+const { lifecycleKey } = await import('../src/features/auth/server/lifecycle-rate-limit.ts');
 const db = getDb(), run = randomUUID(), prefix = `step19-runtime-test-${run}`;
 const origin = 'http://127.0.0.1:3003', secret = randomBytes(32).toString('hex');
 const ip = `fd19:${run.slice(0,4)}:${run.slice(9,13)}:${run.slice(14,18)}::1`;
@@ -97,7 +99,7 @@ async function reschedule(item, at) {
 async function html(path) { const res = await request(path, {}, true); assert.equal(res.status, 200); return res.text(); }
 async function childCommand(args, env) {
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, args, { env: { ...process.env, ...env }, windowsHide: true });
+    const child = spawn(process.execPath, args, { env: { ...process.env, NODE_OPTIONS: '', ...env }, windowsHide: true });
     let stdout = '', stderr = ''; child.stdout.on('data', data => { stdout += data; }); child.stderr.on('data', data => { stderr += data; });
     child.on('error', reject); child.on('close', code => resolve({ code, stdout, stderr }));
   });
@@ -244,6 +246,12 @@ try {
     await db.event.deleteMany({ where: { id: { in: eventIds }, creatorId: { in: userIds }, slug: { startsWith: prefix } } });
     await db.user.deleteMany({ where: { id: { in: userIds }, name: prefix, email: `${prefix}@example.test` } });
     await db.rateLimit.deleteMany({ where: { id: { in: ledger.recordIds.rateLimits }, key: { startsWith: ratePrefix } } });
+    // Step 23 added HMAC lifecycle buckets alongside Better Auth's IP buckets.
+    // Delete only this disposable identity, even when a preloader verified it.
+    const normalizedIp = getIP(new Request(origin, { headers: { 'X-Forwarded-For': ip } }), {}) || ip;
+    const lifecycleKeys = [lifecycleKey(`${prefix}@example.test`, 'signup-cooldown'), lifecycleKey(`${prefix}@example.test`, 'signup-hour'), lifecycleKey(ip, 'email-ip'), lifecycleKey(normalizedIp, 'email-ip')];
+    await db.rateLimit.deleteMany({ where: { key: { in: lifecycleKeys } } });
+    assert.equal(await db.rateLimit.count({ where: { key: { in: lifecycleKeys } } }), 0);
     for (const model of ['eventRegistration','eventReminderPreference']) assert.equal(await db[model].count({ where: { eventId: { in: eventIds } } }), 0);
     for (const model of ['session','account','notification']) assert.equal(await db[model].count({ where: { userId: { in: userIds } } }), 0);
     assert.equal(await db.user.count({ where: { name: { startsWith: prefix } } }), 0);
@@ -251,11 +259,19 @@ try {
     assert.equal(await db.organization.count({ where: { name: { startsWith: prefix } } }), 0);
     assert.equal(await db.rateLimit.count({ where: { key: { startsWith: ratePrefix } } }), 0);
     ledger.cleanupVerified = true; ledger.cleaned = { ...ledger.created }; save();
-    if (baseline) { ledger.after = await fingerprint(); assert.deepEqual(ledger.after, baseline); ledger.existingRecordsUnchanged = true; }
+    if (baseline) {
+      ledger.after = await fingerprint();
+      // Ordinary authentication requests update/expire shared temporary limiter
+      // counters. Match every business table exactly; fixture limiters above
+      // still have explicit zero-row cleanup assertions.
+      for (const [table, before] of Object.entries(baseline)) if (table !== 'RateLimit') assert.deepEqual(ledger.after[table], before);
+      ledger.rateLimitMaintenance = 'Ephemeral authentication counters excluded from business-table comparison; own limiter cleanup verified separately.';
+      ledger.existingRecordsUnchanged = true;
+    }
     if (schemaBefore) { ledger.schemaAfter = await schemaFingerprint(); assert.equal(ledger.schemaAfter, schemaBefore); ledger.schemaUnchanged = true; }
     const leaked = sensitive.some(value => value && logs.includes(value)); ledger.privacyLogsPassed = !leaked; assert.equal(leaked, false, 'Sensitive data detected in server logs');
     writeFileSync(`${outputRoot}/server.log`, logs); save();
-    pass('cleanup complete; all public-table hashes/counts and schema fingerprints match baseline; logs private-data-free');
+    pass('cleanup complete; all business-table hashes/counts and schema fingerprints match baseline; own limiter rows removed; logs private-data-free');
   } catch {
     ledger.cleanupOrSafetyFailure = true; save(); process.exitCode = 1; console.error('Cleanup/safety verification needs attention; inspect the ledger.');
   } finally { await db.$disconnect(); }

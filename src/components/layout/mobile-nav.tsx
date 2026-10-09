@@ -4,7 +4,8 @@ import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, useReducedMotion } from "motion/react";
-import { ArrowUpRight, Search, X } from "lucide-react";
+import { ArrowUpRight, X } from "lucide-react";
+import { GlobalSearch } from "@/features/search/components/global-search";
 import { buttonStyles } from "@/components/ui/button";
 import { siteConfig, isNavigationActive } from "@/config/site";
 import { motionTokens } from "@/config/motion";
@@ -43,7 +44,7 @@ export function MobileNav({ onClose, user }: { onClose: () => void; user?: Accou
       onCancel={(event) => { event.preventDefault(); onClose(); }}
       onKeyDown={(event) => {
         if (event.key !== "Tab") return;
-        const controls = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), summary, [tabindex="0"]')).filter((control) => control.getClientRects().length > 0);
+        const controls = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), summary, [tabindex="0"]')).filter((control) => control.getClientRects().length > 0);
         const first = controls[0];
         const last = controls[controls.length - 1];
         if (event.shiftKey && document.activeElement === first) {
@@ -61,7 +62,7 @@ export function MobileNav({ onClose, user }: { onClose: () => void; user?: Accou
         <nav aria-label="Mobile navigation" className={styles.drawerLinks}>
           {siteConfig.navigation.map((item, index) => <Link key={item.href} href={item.href} onClick={onClose} aria-current={isNavigationActive(pathname, item.href) ? "page" : undefined}><small>0{index + 1}</small>{item.label}<ArrowUpRight size={22} aria-hidden="true" /></Link>)}
         </nav>
-        <Link href="/explore#event-search" onClick={onClose} className={styles.drawerSearch}><Search size={18} aria-hidden="true" />Search events<ArrowUpRight size={16} aria-hidden="true" /></Link>
+        <GlobalSearch onNavigate={onClose} />
         <div className={styles.drawerActions}>{user ? <AccountMenu user={user} onNavigate={onClose} /> : <><Link href="/sign-in" onClick={onClose} className={buttonStyles({ variant: "secondary" })}>Sign in</Link><Link href="/get-started" onClick={onClose} className={buttonStyles()}>Get started <ArrowUpRight aria-hidden="true" /></Link></>}</div>
         <p className={styles.drawerNote}>New ideas. New places. Your next connection.</p>
       </motion.div>

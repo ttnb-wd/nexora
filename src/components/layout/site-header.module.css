@@ -10,6 +10,7 @@
 .desktopNav a:hover, .desktopNav a[aria-current="page"], .signIn:hover { color: var(--primary); }
 .desktopNav a[aria-current="page"] { box-shadow: 0 2px 0 var(--primary); }
 .actions { display: flex; align-items: center; gap: 1.25rem; }
+.globalSearch { width: clamp(9rem, 14vw, 14rem); min-width: 0; }
 .search { display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.6rem 0.2rem; color: #6b637e; font-size: 0.75rem; cursor: default; }
 .search small { border: 1px solid #ded8ec; padding: 0.05rem 0.3rem; border-radius: 0.25rem; font-size: 0.55rem; }
 .getStarted { font-size: 0.75rem; }

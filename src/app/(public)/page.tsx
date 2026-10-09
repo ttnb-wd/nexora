@@ -12,6 +12,7 @@ import { Section } from "@/components/layout/section";
 import { buttonStyles } from "@/components/ui/button";
 import { motionTokens } from "@/config/motion";
 import styles from "./homepage.module.css";
+import { GlobalSearch } from "@/features/search/components/global-search";
 
 export const dynamic = "force-dynamic";
 export default async function HomePage() {
@@ -37,6 +38,7 @@ export default async function HomePage() {
                 <FadeUp delay={0.55 + motionTokens.stagger.element}><Link href="/create-event" className={buttonStyles({ size: "lg", variant: "secondary" })}>Create an event <ArrowUpRight aria-hidden="true" /></Link></FadeUp>
               </div>
               <FadeUp delay={0.75}><p className={styles.heroNote}>Built for curious minds and meaningful moments.</p></FadeUp>
+              <GlobalSearch />
             </div>
             <EventOrbit events={homepageEvents} />
           </div>

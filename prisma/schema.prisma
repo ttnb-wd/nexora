@@ -211,6 +211,8 @@ model Event {
   @@index([creatorId])
   @@index([organizationId, startAt])
   @@index([status, startAt])
+  // Expression GIN search indexes are maintained in global_search_discovery SQL.
+  @@index([category, status, startAt])
 }
 
 enum EventResourceType {

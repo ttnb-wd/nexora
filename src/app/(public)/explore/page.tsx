@@ -1,16 +1,12 @@
-import { ExploreExperience } from "@/features/events/components/explore-experience";
-import { getPublishedEvents } from "@/features/events/server/public-event-queries";
+import { DiscoveryPage } from "@/features/search/components/discovery-page";
+import type { RawSearchParams } from "@/features/search/params";
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Explore Events", description: "Discover upcoming technology, design, business, and community events on Nexora." };
-export default async function ExplorePage() {
-  const now = new Date();
-  let events: Awaited<ReturnType<typeof getPublishedEvents>> = [];
-  let unavailable = false;
-  try {
-    events = await getPublishedEvents(now);
-  } catch (error) {
-    console.error("Public event discovery query failed", error);
-    unavailable = true;
-  }
-  return <ExploreExperience publishedEvents={events} featuredEvent={events[0] ?? null} now={now.toISOString()} unavailable={unavailable} />;
+export async function generateMetadata({ searchParams }: { searchParams: Promise<RawSearchParams> }) {
+  const raw = await searchParams;
+  return { title: "Explore Events", description: "Discover upcoming technology, design, business, and community events on Nexora.",
+    ...(Object.keys(raw).length ? { robots: { index: false, follow: true } } : {}),
+  };
+}
+export default async function ExplorePage({ searchParams }: { searchParams: Promise<RawSearchParams> }) {
+  return <DiscoveryPage raw={await searchParams} explore />;
 }

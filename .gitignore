@@ -55,6 +55,7 @@ docs/step-09-event-management.md
 # Documentation / reports
 docs/
 *.md
+!STEP25_GLOBAL_SEARCH.md
 
 # Generated screenshots / artifacts
 artifacts/

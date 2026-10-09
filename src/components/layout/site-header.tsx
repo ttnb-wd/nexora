@@ -4,7 +4,8 @@ import { useCallback, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence } from "motion/react";
-import { ArrowUpRight, Asterisk, Bell, Grid2X2, Search } from "lucide-react";
+import { ArrowUpRight, Asterisk, Bell, Grid2X2 } from "lucide-react";
+import { GlobalSearch } from "@/features/search/components/global-search";
 import { Container } from "@/components/layout/container";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { buttonStyles } from "@/components/ui/button";
@@ -35,7 +36,7 @@ export function SiteHeader({ unreadCount = null, authenticated = false }: { unre
           {siteConfig.navigation.map((item) => <Link key={item.href} href={item.href} aria-current={isNavigationActive(pathname, item.href) ? "page" : undefined}>{item.label}</Link>)}
         </nav>
         <div className={styles.actions}>
-          <Link href="/explore#event-search" className={styles.search} aria-label="Search events"><Search size={18} aria-hidden="true" /><span>Search</span></Link>
+          <div className={styles.globalSearch}><GlobalSearch compact /></div>
           {signedIn && bell}
           {session?.user ? <><AccountMenu user={session.user} /></> : <><Link href="/sign-in" className={styles.signIn}>Sign in</Link>
           <Link href="/get-started" className={buttonStyles({ size: "sm", className: styles.getStarted })}>Get started <ArrowUpRight aria-hidden="true" /></Link></>}
