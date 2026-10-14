@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Suspense } from "react";
+import { RecommendationSection } from "@/features/recommendations/components/recommendation-section";
 import { ArrowUpRight } from "lucide-react";
 import { requireUser } from "@/features/auth/server/session";
 import { getDb } from "@/lib/db";
@@ -23,6 +25,7 @@ export default async function DashboardPage() {
       <section aria-labelledby="following-title"><h2 id="following-title">Following</h2><p>{following.length ? `${following.length} followed ${following.length === 1 ? "organization" : "organizations"}.` : "No followed organizations yet."}</p><Link href="/dashboard/following">View following <ArrowUpRight size={16} aria-hidden="true" /></Link></section>
       <section aria-labelledby="notifications-title"><h2 id="notifications-title">Notifications</h2><p>Updates from organizations and your event registrations.</p><Link href="/dashboard/notifications">View notifications <ArrowUpRight size={16} aria-hidden="true" /></Link></section>
     </div>
+    <Suspense fallback={null}><RecommendationSection compact /></Suspense>
     <p className={styles.intro}><Link href="/dashboard/events">Manage your individual events <ArrowUpRight size={16} aria-hidden="true" /></Link></p>
     <p className={styles.intro}><Link href="/dashboard/settings">Account settings <ArrowUpRight size={16} aria-hidden="true" /></Link></p>
     {membership && <p className={styles.intro}><Link href="/organizer">Manage your organizations <ArrowUpRight size={16} aria-hidden="true" /></Link></p>}

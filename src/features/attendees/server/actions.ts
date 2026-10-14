@@ -12,6 +12,7 @@ async function run(eventId: string, scope: string | null, form: FormData, operat
     if (operation === "undo" && form.get("confirm") !== "yes") return { message: "Confirm that you want to undo this check-in." };
     const result = await mutateAttendance(getDb(), user.id, { eventId, scope, registrationId: form.get("registrationId") }, operation);
     if (result.ok) {
+      revalidatePath("/", "layout");
       const path = scope ? `/organizer/${scope}/events/${eventId}` : `/dashboard/events/${eventId}`;
       revalidatePath(`${path}/attendees`);
       revalidatePath(path);

@@ -24,6 +24,7 @@ export async function scanEventTicket(eventId: string, scope: string | null, _pr
     if (!user) return { message: "Sign in to check in attendees." };
     const result = await checkInByTicket(getDb(), user.id, { eventId, scope, token: form.get("token") }, [getAuthEnvironment().APP_URL, getPublicAppUrl()]);
     if (result.ok) {
+      revalidatePath("/", "layout");
       const path = scope ? `/organizer/${scope}/events/${eventId}` : `/dashboard/events/${eventId}`;
       for (const value of [path, `${path}/attendees`, `${path}/check-in`, "/dashboard", "/dashboard/joined", "/dashboard/saved", `/events/${result.slug}`]) revalidatePath(value);
     }

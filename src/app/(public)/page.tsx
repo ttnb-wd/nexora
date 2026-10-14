@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Suspense } from "react";
+import { RecommendationSection } from "@/features/recommendations/components/recommendation-section";
 import { ArrowDown, ArrowUpRight } from "lucide-react";
 import { AmbientBackground } from "@/components/animation/ambient-background";
 import { FadeUp } from "@/components/animation/fade-up";
@@ -46,6 +48,7 @@ export default async function HomePage() {
         </Container>
       </Section>
       <CategoryStrip />
+      <Container><Suspense fallback={null}><RecommendationSection /></Suspense></Container>
       <Section id="happening-soon" aria-labelledby="soon-title" className={styles.teaser}>
         <Container>
           <FadeUp><header className={styles.teaserHeader}><div><p className="label text-primary mb-3">FIND YOUR NEXT MOMENT</p><h2 id="soon-title" className="heading-1">Happening soon<span>.</span></h2></div><p>New perspectives. Good company.<br />Something worth showing up for.</p></header></FadeUp>

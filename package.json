@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "test:recommendations": "node --test tests/recommendations.test.mjs",
+    "test:recommendations:runtime": "node tests/recommendations-runtime.mjs",
+    "test:recommendations:browser": "node tests/recommendations-browser.mjs",
+    "test:recommendations:regression": "node tests/global-search-regression.mjs",
     "test:search": "node --test tests/global-search.test.mjs",
     "test:search:runtime": "node tests/global-search-runtime.mjs",
     "test:search:browser": "node tests/global-search-browser.mjs",
