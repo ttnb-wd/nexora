@@ -6,9 +6,12 @@ import { formatEventDate } from "../event-helpers";
 import styles from "./event-detail.module.css";
 import { CalendarControl, ReminderControl } from "../calendar/calendar-controls";
 import type { ReminderState } from "../reminders/schemas";
+import { CollectionPicker } from "@/features/collections/components/collection-picker";
+import { useEventBookmark } from "@/features/participation/components/bookmark-provider";
 export function EventRegistrationPanel(props: EventInteractionProps & { reminder: ReminderState }) {
   const { event, joined, attended, availability, message } = props;
   const reduced = useReducedMotion();
+  const bookmark = useEventBookmark(event.slug);
   return <aside className={styles.registration} aria-labelledby="registration-title"><motion.div className={styles.registrationCard} whileHover={reduced === false ? { y: -2 } : undefined} transition={{ duration: .2 }}>
     <p className={styles.eyebrow}>YOUR NEXT MOMENT</p><h2 id="registration-title">{event.status === "completed" ? "A moment worth revisiting." : "Make room for something new."}</h2>
     <dl className={styles.facts}>
@@ -19,6 +22,7 @@ export function EventRegistrationPanel(props: EventInteractionProps & { reminder
     </dl>
     <p className={styles.availability}><Check size={15} aria-hidden="true" />{attended ? "You attended this event" : joined ? `You are registered${availability.spotsLeft === null ? "" : ` · ${availability.spotsLeft} spots left`}` : availability.closedReason ?? (availability.spotsLeft === null ? "Registration open" : `${availability.spotsLeft} spots left`)}</p>
     <EventActionButtons {...props} /><p className={styles.panelNote}>{message || "Manage your registration and saved events in your dashboard."}</p>
+    {bookmark.authenticated && <CollectionPicker slug={event.slug} title={event.title} saved={bookmark.saved} />}
     {event.calendar && (!joined || event.status === "completed") && <CalendarControl links={event.calendar} title={event.title} />}
     <ReminderControl slug={event.slug} state={props.reminder} />
   </motion.div><p className={styles.panelCaption}>Great things happen when we show up.</p></aside>;

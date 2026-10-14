@@ -46,6 +46,7 @@ model User {
   registrations EventRegistration[] @relation("EventAttendee")
   checkedInRegistrations EventRegistration[] @relation("EventCheckInActor")
   bookmarks     EventBookmark[]
+  eventCollections EventCollection[]
   followedOrganizations OrganizationFollower[]
   notifications Notification[]
   eventReminders EventReminderPreference[]
@@ -325,10 +326,39 @@ model EventBookmark {
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  collectionMemberships EventCollectionMembership[]
 
   @@unique([userId, eventId])
   @@index([eventId])
   @@index([userId, createdAt])
+}
+
+model EventCollection {
+  id             String @id @default(cuid())
+  userId         String
+  name           String @db.VarChar(60)
+  normalizedName String @db.VarChar(180)
+  createdAt      DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime @updatedAt @db.Timestamptz(3)
+  user           User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  memberships    EventCollectionMembership[]
+
+  @@unique([userId, normalizedName])
+  // Composite FK below enforces collection/bookmark ownership in PostgreSQL.
+  @@unique([id, userId])
+}
+
+model EventCollectionMembership {
+  id           String @id @default(cuid())
+  collectionId String
+  userId       String
+  eventId      String
+  createdAt    DateTime @default(now()) @db.Timestamptz(3)
+  collection   EventCollection @relation(fields: [collectionId, userId], references: [id, userId], onDelete: Cascade)
+  bookmark     EventBookmark @relation(fields: [userId, eventId], references: [userId, eventId], onDelete: Cascade)
+
+  @@unique([collectionId, eventId])
+  @@index([userId, eventId])
 }
 
 model OrganizationFollower {

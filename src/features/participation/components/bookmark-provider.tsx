@@ -26,5 +26,5 @@ export function useEventBookmark(slug: string, fixture = false) {
       } catch { setMessage("We could not update your saved event. Please try again."); }
     });
   }
-  return { saved, pending, message, toggle };
+  return { saved, pending, message, toggle, authenticated: viewer.authenticated };
 }

@@ -25,6 +25,8 @@ export async function mutateParticipation(input: unknown, kind: "join" | "cancel
       if (!event) return { ok: false, message: "This event is no longer available." };
       const where = { userId_eventId: { userId: user.id, eventId: event.id } };
       if (kind === "unsave") {
+        // Memberships reference this owner/event bookmark with ON DELETE CASCADE.
+        // Removing the bookmark atomically removes only this user's memberships.
         await tx.eventBookmark.deleteMany({ where: { userId: user.id, eventId: event.id } });
         return { ok: true, message: "Event removed from saved events." };
       }

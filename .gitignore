@@ -57,6 +57,7 @@ docs/
 *.md
 !STEP25_GLOBAL_SEARCH.md
 !STEP26_RECOMMENDATIONS.md
+!STEP27_SAVED_COLLECTIONS.md
 
 # Generated screenshots / artifacts
 artifacts/

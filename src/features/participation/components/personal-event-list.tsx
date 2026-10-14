@@ -10,6 +10,7 @@ import styles from "@/features/events/components/event-management.module.css";
 import { registrationStatusLabels } from "@/features/attendees/schemas";
 import { CalendarControl } from "@/features/events/calendar/calendar-controls";
 import { reminderLabels, type ReminderState } from "@/features/events/reminders/schemas";
+import { CollectionPicker } from "@/features/collections/components/collection-picker";
 type Row = { event: PublicEvent; registrationStatus?: string; eventStatus: string; publicVisible: boolean; reminder?: ReminderState };
 function PersonalEvent({ row, saved }: { row: Row; saved: boolean }) {
   const [pending, startTransition] = useTransition();
@@ -27,6 +28,7 @@ function PersonalEvent({ row, saved }: { row: Row; saved: boolean }) {
   }
   return <section className={`${styles.card} ${styles.personalCard}`} aria-label={row.event.title}>
     {row.publicVisible ? <EventCard event={row.event} variant="compact" /> : <><h2>{row.event.title}</h2><p>{row.event.date} · {row.event.time}</p><p>{row.event.organizer.name} · {row.event.location.city} · {row.event.type}</p></>}
+    {saved && !row.publicVisible && <CollectionPicker slug={row.event.slug} title={row.event.title} />}
     <p>{row.eventStatus === "CANCELLED" ? "Event cancelled by the organizer" : row.eventStatus === "ARCHIVED" ? "Event archived" : row.eventStatus === "DRAFT" ? "Event no longer publicly available" : row.event.status === "completed" ? "Event completed" : "Upcoming event"}</p>
     {!saved && <p>Registration: {registrationStatusLabels[row.registrationStatus as keyof typeof registrationStatusLabels] ?? row.registrationStatus}</p>}
     {!saved && ((active && row.eventStatus === "PUBLISHED" && row.event.status !== "completed") || (row.registrationStatus === "ATTENDED" && row.publicVisible)) && <Link href={`/dashboard/joined/${row.event.slug}/ticket`} className={buttonStyles({ variant: "secondary" })}>View ticket</Link>}

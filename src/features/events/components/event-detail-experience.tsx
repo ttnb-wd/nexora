@@ -24,6 +24,7 @@ import { CalendarControl, ReminderControl } from "../calendar/calendar-controls"
 import type { ReminderState } from "../reminders/schemas";
 import { FeedbackForm } from "@/features/post-event/feedback-form";
 import type { ViewerFeedback } from "@/features/post-event/schemas";
+import { CollectionPicker } from "@/features/collections/components/collection-picker";
 function DetailSection({ title, index, children }: { title: string; index: number; children: ReactNode }) {
   return <section id={title.toLowerCase()} aria-labelledby={`${title.toLowerCase()}-title`} className={styles.section}><FadeUp distance={14} duration={.45}><header className={styles.sectionHeading}><span aria-hidden="true">{String(index).padStart(2, "0")}</span><h2 id={`${title.toLowerCase()}-title`}>{title}</h2></header>{children}</FadeUp></section>;
 }
@@ -57,6 +58,7 @@ export function EventDetailExperience({ event, related, participation, reminder,
   return <main id="main-content" tabIndex={-1} ref={page} className={styles.page} data-event-detail>
     {!reduced && <motion.div className={styles.progress} style={{ scaleX: scrollYProgress }} aria-hidden="true" />}
     <Container><FadeUp distance={18} duration={.6}><EventDetailHero {...interactions} /></FadeUp>
+      {bookmark.authenticated && <div className={styles.mobileCollections}><CollectionPicker slug={event.slug} title={event.title} saved={bookmark.saved} /></div>}
       <nav className={styles.sectionNav} aria-label="Event sections">{sections.map((section) => <a key={section} href={`#${section.toLowerCase()}`}>{section}</a>)}</nav>
       <div className={styles.contentGrid}><div className={styles.content}>
         {showAbout && <DetailSection title="About" index={1}><div className={styles.about}>{event.details.about.length ? event.details.about.map((paragraph) => <p key={paragraph}>{paragraph}</p>) : null}</div><ul className={styles.tags} aria-label="Event interests">{event.tags.map((tag) => <li key={tag}>{tag}</li>)}</ul></DetailSection>}

@@ -9,6 +9,7 @@ async function mutate(slug: string, kind: "join" | "cancel" | "save" | "unsave")
     revalidatePath("/dashboard");
     revalidatePath("/dashboard/joined");
     revalidatePath("/dashboard/saved");
+    revalidatePath("/dashboard/saved/[collectionId]", "page");
     revalidatePath("/organizer/[organizationSlug]/events/[eventId]", "page");
     revalidatePath("/dashboard/events/[eventId]", "page");
     revalidatePath("/organizer/[organizationSlug]/events/[eventId]/attendees", "page");

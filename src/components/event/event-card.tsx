@@ -7,6 +7,7 @@ import { ArrowUpRight, Bookmark, CalendarDays, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Event, EventCardVariant } from "@/features/events/types";
 import styles from "./event-card.module.css";
+import { CollectionPicker } from "@/features/collections/components/collection-picker";
 
 export type EventCardProps = { event: Event; variant?: EventCardVariant; saved?: boolean; onSave?: () => void; decorative?: boolean };
 export function EventCard({ event, variant = "standard", saved, onSave, decorative = false }: EventCardProps) {
@@ -33,6 +34,7 @@ export function EventCard({ event, variant = "standard", saved, onSave, decorati
           <button type="button" className={styles.save} aria-label={`${isSaved ? "Unsave" : "Save"} ${event.title}`} aria-pressed={isSaved} disabled={bookmark.pending} onClick={onSave ?? bookmark.toggle}><Bookmark size={18} aria-hidden="true" fill={isSaved ? "currentColor" : "none"} /></button>
         </div>}
         {bookmark.message && <p role="status" className={styles.time}>{bookmark.message}</p>}
+        {!decorative && event.source === "database" && isSaved && bookmark.authenticated && <CollectionPicker slug={event.slug} title={event.title} />}
       </div>
     </article>
   );

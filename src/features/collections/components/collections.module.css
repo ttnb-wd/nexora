@@ -1,0 +1,37 @@
+.tabs { display: flex; flex-wrap: wrap; gap: .6rem; margin-bottom: 1.6rem; }
+.tabs a { padding: .7rem 1rem; border: 1px solid var(--border); border-radius: 2rem; color: var(--primary); }
+.tabs a[aria-current="page"] { background: var(--primary); color: white; border-color: var(--primary); }
+.grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 1rem; margin-block: 1.5rem; }
+.collection { padding: 1.4rem; border: 1px solid var(--border); border-radius: 1.2rem; background: var(--surface); min-width: 0; overflow-wrap: anywhere; }
+.collection h2 { font-size: 1.3rem; margin-bottom: .6rem; }
+.collection a { color: var(--primary); text-decoration: underline; text-underline-offset: 3px; }
+.management { margin-bottom: 2rem; padding: 1.3rem; background: var(--surface); border: 1px solid var(--border); border-radius: 1.2rem; }
+.form { display: grid; gap: .5rem; margin-block: 1rem; max-width: 40rem; }
+.form label { font-weight: 600; }
+.inline, .actions, .dialogHeading { display: flex; align-items: center; flex-wrap: wrap; gap: .7rem; }
+.inline input { flex: 1; min-width: 0; width: 100%; padding: .8rem; border: 1px solid var(--border); border-radius: .6rem; background: white; color: var(--foreground); font-size: 1rem; }
+.primary, .secondary { min-height: 2.75rem; padding: .65rem 1rem; border: 1px solid var(--primary); border-radius: .7rem; font-size: .85rem; cursor: pointer; }
+.primary { color: white; background: var(--primary); }
+.secondary { color: var(--primary); background: var(--surface); }
+.primary:disabled, .secondary:disabled { opacity: .6; cursor: wait; }
+.pickerTrigger { position: relative; z-index: 3; display: inline-flex; align-items: center; min-height: 2.75rem; margin-top: .45rem; padding-inline: .15rem; font-size: .8rem; color: var(--primary); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.dialog { position: fixed; margin: auto; width: min(32rem,calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); overflow: auto; padding: 1.5rem; border: 1px solid var(--border); border-radius: 1.2rem; background: var(--surface); color: var(--foreground); overflow-wrap: anywhere; }
+.dialog::backdrop { background: rgb(29 20 45 / .45); }
+.dialogHeading { align-items: start; justify-content: space-between; margin-bottom: .8rem; }
+.dialog h2 { font-size: 1.4rem; font-weight: 650; flex: 1; min-width: 0; }
+.dialog p { margin-block: .7rem; }
+.dialog a { color: var(--primary); }
+.choices { margin-block: 1.2rem; max-height: 16rem; overflow: auto; }
+.choices legend { font-weight: 600; margin-bottom: .4rem; }
+.choices label { display: flex; align-items: center; gap: .6rem; padding: .6rem .2rem; cursor: pointer; }
+.choices input { width: 1.15rem; height: 1.15rem; flex: 0 0 auto; accent-color: var(--primary); }
+.choices span { flex: 1; min-width: 0; }
+.choices small { color: #736780; white-space: nowrap; }
+.hint { color: #736780; font-size: .8rem; }
+.success { color: #25613a; }
+.error { color: #9d2441; }
+.pagination { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: 1.5rem; }
+.pagination a { color: var(--primary); padding-block: .6rem; }
+.tabs a:focus-visible, .collection a:focus-visible, .management button:focus-visible, .dialog button:focus-visible, .pickerTrigger:focus-visible, .dialog input:focus-visible, .form input:focus-visible, .pagination a:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+@media(max-width:900px) { .grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media(max-width:540px) { .grid { grid-template-columns: minmax(0,1fr); } .inline { align-items: stretch; } .inline input { flex-basis: 100%; } .dialog { padding: 1rem; } }
